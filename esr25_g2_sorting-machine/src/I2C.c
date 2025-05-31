@@ -1,6 +1,6 @@
 #include "msp430fr2355.h"
 #include <stdint.h>
-#include "I2C.h"
+#include "../include/I2C.h"
 
 static char* packet;
 static unsigned int data_cnt;
