@@ -16,14 +16,17 @@
 #define LED_OFF_H(channel) (LED0_OFF_H + 4 * (channel))
 
 
-#define BASIC_SERVO_MIN_PULSE  160   
-#define BASIC_SERVO_MAX_PULSE  610  
+// #define BASIC_SERVO_MIN_PULSE  160   
+// #define BASIC_SERVO_MAX_PULSE  610  
+
+#define SERVO_DEG_PULSE_45  272
+#define SERVO_DEG_PULSE_90  385   
+#define SERVO_DEG_PULSE_135 497
 
 
+// uint16_t degrees_to_pulse(uint8_t angle_deg, uint16_t max_pulse, uint16_t min_pulse);
 
-uint16_t degrees_to_pulse(uint8_t angle_deg, uint16_t max_pulse, uint16_t min_pulse);
-
-void set_basic_servo_angle(uint8_t channel, uint8_t angle_deg);
+// void set_basic_servo_angle(uint8_t channel, uint8_t angle_deg);
 
 // Initialize PCA9685 to 50 Hz PWM (writes PRESCALE and MODE1 registers).
 void init_PCA9685(void);

@@ -1,8 +1,7 @@
 #include <msp430.h> 
-#include "PCA9685.h"
+#include "PCA9685/PCA9685.h"
 #include <stdint.h>
-#include "servos.h"
-#include "utils.h"
+#include "platform/platform.h"
 #include "I2C/I2C.h"
 
 /**
@@ -17,32 +16,32 @@ int main(void)
 	init_PCA9685();
 
     while (1) {
-    enter_default_position();
+    plattform_default_position();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    empty_posi1();
+    plattform_empty_r();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    enter_default_position();
+    plattform_default_position();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    empty_posi2();
+    plattform_empty_g();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    enter_default_position();
+    plattform_default_position();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    empty_posi3();
+    plattform_empty_b();
 
-    delay_s(2);
+    __delay_cycles(2000000);
 
-    enter_default_position();
+    plattform_default_position();
 
-    delay_s(2);
+    __delay_cycles(2000000);
     }
 }
