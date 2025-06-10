@@ -16,14 +16,9 @@
 #define LED_OFF_H(channel) (LED0_OFF_H + 4 * (channel))
 
 
-#define BASIC_SERVO_MIN_PULSE  120   
-#define BASIC_SERVO_MAX_PULSE  585  
+#define BASIC_SERVO_MIN_PULSE  160   
+#define BASIC_SERVO_MAX_PULSE  610  
 
-// #define HEAVY_SERVO_MIN_PULSE  145   
-// #define HEAVY_SERVO_MAX_PULSE  473
-
-// #define SERVO_MIN_PULSE  205   // ≈1.0 ms 
-// #define SERVO_MAX_PULSE  410   // ≈2.0 ms 
 
 
 uint16_t degrees_to_pulse(uint8_t angle_deg, uint16_t max_pulse, uint16_t min_pulse);

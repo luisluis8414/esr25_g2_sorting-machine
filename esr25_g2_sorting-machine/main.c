@@ -1,11 +1,9 @@
 #include <msp430.h> 
 #include "PCA9685.h"
-#include "I2C.h"
 #include <stdint.h>
 #include "servos.h"
 #include "utils.h"
-
-
+#include "I2C/I2C.h"
 
 /**
  * main.c
@@ -15,7 +13,7 @@ int main(void)
 	WDTCTL = WDTPW | WDTHOLD;
     PM5CTL0 &= ~LOCKLPM5;  
 
-    init_I2C();
+    I2C_init();
 	init_PCA9685();
 
     while (1) {

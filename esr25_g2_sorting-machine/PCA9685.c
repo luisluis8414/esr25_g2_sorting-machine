@@ -1,6 +1,6 @@
 #include "msp430fr2355.h"
 #include <stdint.h>
-#include "I2C.h"
+#include "I2C/I2C.h"
 #include "PCA9685.h"
 
 // schwere Berechungen, später Funktion durch feste Werte ersetzen, 45, 90, 135 deg? 
@@ -34,10 +34,10 @@ void init_PCA9685() {
     // round(25,000,000/(4096 × 50)) - 1 = 121 (0x79)
     // has to happen while in SLEEP Mode
     char PRESCALE_DATA[] = {0xFE, 0x79}; 
-    write_I2C(PCA9685_ADDR, PRESCALE_DATA, 2);
+    I2C_write(PCA9685_ADDR, PRESCALE_DATA, 2);
 
     char MODE1_AI_ALLCALL_DATA[] = {0x00, 0x21};
-    write_I2C(PCA9685_ADDR, MODE1_AI_ALLCALL_DATA, 2);
+    I2C_write(PCA9685_ADDR, MODE1_AI_ALLCALL_DATA, 2);
 }
 
 void set_servo_position(uint8_t channel, uint16_t position) {
@@ -46,6 +46,6 @@ void set_servo_position(uint8_t channel, uint16_t position) {
     }
 
     char servo_data[] = {LED_ON_L(channel), 0x00, 0x00, (position & 0xFF), (position >> 8)};
-    write_I2C(PCA9685_ADDR, servo_data, 5);
+    I2C_write(PCA9685_ADDR, servo_data, 5);
 }
 

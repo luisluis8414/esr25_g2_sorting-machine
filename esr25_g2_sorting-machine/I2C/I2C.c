@@ -1,3 +1,10 @@
+/*
+ * I2C.c
+ *
+ *  Created on: 10.06.2025
+ *      Author: wehrberger
+ */
+
 #include "msp430fr2355.h"
 #include <stdint.h>
 #include "I2C.h"
@@ -7,8 +14,8 @@ static unsigned int data_cnt;
 static unsigned int packet_length;
 static char data_in;
 
-// init, start in write mode
-void init_I2C(void) {
+// init I2C
+void I2C_init(void) {
     UCB0CTLW0 |= UCSWRST;    // put into SW reset
 
     UCB0CTLW0 |= UCSSEL_3;  // choose SMCLK
@@ -30,12 +37,12 @@ void init_I2C(void) {
     UCB0CTLW0 &= ~UCSWRST;  // take out of SW reset
 
     //-- enable IRQs
-    UCB0IE |= UCRXIE0 | UCTXIE0 | UCSTPIE;      // enable READ, WRITE, PAUSE Interrupts
+    UCB0IE |= UCRXIE0 | UCTXIE0 | UCSTPIE | UCNACKIE;    // enable READ, WRITE, PAUSE, NACK Interrupts
     __bis_SR_register(GIE);                     // global interrupt enable
 }
 
 // simple I2C write, first entry in data is addr, rest is data, so {startaddr, data for startaddr, data for startaddr + 1,....}
-void write_I2C(uint8_t slave_addr, char data[], int length) {
+void I2C_write(uint8_t slave_addr, char data[], int length) {
     UCB0I2CSA = slave_addr;
 
     packet = data;
@@ -51,10 +58,10 @@ void write_I2C(uint8_t slave_addr, char data[], int length) {
     LPM0;
 }
 
-void read_I2C(uint8_t slave_addr, uint8_t reg_addr) {
+char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr) {
     char addr_buf[1] = { reg_addr };
 
-    write_I2C(slave_addr, addr_buf, 1);
+    I2C_write(slave_addr, addr_buf, 1);
 
     UCB0CTLW0 &= ~UCTR; 
 
@@ -63,6 +70,8 @@ void read_I2C(uint8_t slave_addr, uint8_t reg_addr) {
     UCB0CTLW0 |= UCTXSTT; // generate start bit
 
     LPM0;
+
+    return data_in;
 }
 
 
@@ -74,7 +83,9 @@ __interrupt void EUSCI_B0_I2C_ISR(void)
       switch (__even_in_range(UCB0IV, USCI_I2C_UCBIT9IFG)) {
         // case USCI_NONE: break;
         // case USCI_I2C_UCALIFG: break;       // Arbitration lost
-        // case USCI_I2C_UCNACKIFG: break;     // NACK received
+        case USCI_I2C_UCNACKIFG: 
+            __no_operation();
+            break;     // NACK received
         // case USCI_I2C_UCSTTIFG: break;      // START condition received
          case USCI_I2C_UCSTPIFG:                  // STOP condition received
             // bic = bit clear
@@ -102,6 +113,7 @@ __interrupt void EUSCI_B0_I2C_ISR(void)
         // case USCI_I2C_UCBCNTIFG: break;
         // case USCI_I2C_UCCLTOIFG: break;
         // case USCI_I2C_UCBIT9IFG: break;
-        default: break;
+        default: 
+            break;
     }
 }
