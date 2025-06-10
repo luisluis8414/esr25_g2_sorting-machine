@@ -4,17 +4,17 @@
 #include "PCA9685.h"
 
 // schwere Berechungen, später Funktion durch feste Werte ersetzen, 45, 90, 135 deg? 
-uint16_t degrees_to_pulse(uint8_t angle_deg) {
+uint16_t degrees_to_pulse(uint8_t angle_deg, uint16_t max_pulse, uint16_t min_pulse) {
     if (angle_deg >= 180) {
-        return SERVO_MAX_PULSE;
+        return max_pulse;
     }
-    const uint32_t span = (uint32_t)SERVO_MAX_PULSE - (uint32_t)SERVO_MIN_PULSE;
+    const uint32_t span = (uint32_t)max_pulse - (uint32_t)min_pulse;
     uint32_t scaled = ((uint32_t)angle_deg * span) / 180U;
-    return (uint16_t)(SERVO_MIN_PULSE + scaled);
+    return (uint16_t)(min_pulse + scaled);
 }
 
 
-void set_servo_angle(uint8_t channel, uint8_t angle_deg) {
+void set_basic_servo_angle(uint8_t channel, uint8_t angle_deg) {
     if (channel > 15) {
         return; 
     }
@@ -23,9 +23,10 @@ void set_servo_angle(uint8_t channel, uint8_t angle_deg) {
         angle_deg = 180;
     }
 
-    uint16_t pulse = degrees_to_pulse(angle_deg);
+    uint16_t pulse = degrees_to_pulse(angle_deg, BASIC_SERVO_MAX_PULSE, BASIC_SERVO_MIN_PULSE);
     set_servo_position(channel, pulse);
 }
+
 
 void init_PCA9685() {
    //-- Set PWM frequency to 50hz
