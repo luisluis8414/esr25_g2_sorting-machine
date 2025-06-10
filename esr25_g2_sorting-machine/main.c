@@ -4,6 +4,11 @@
 #include "platform/platform.h"
 #include "I2C/I2C.h"
 
+void init() {
+    I2C_init();
+	PCA9685_init();
+}
+
 /**
  * main.c
  */
@@ -12,8 +17,7 @@ int main(void)
 	WDTCTL = WDTPW | WDTHOLD;
     PM5CTL0 &= ~LOCKLPM5;  
 
-    I2C_init();
-	init_PCA9685();
+    init();
 
     while (1) {
     plattform_default_position();

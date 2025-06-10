@@ -28,7 +28,7 @@
 // }
 
 
-void init_PCA9685() {
+void PCA9685_init() {
    //-- Set PWM frequency to 50hz
     // https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf page 25
     // round(25,000,000/(4096 × 50)) - 1 = 121 (0x79)
@@ -40,7 +40,7 @@ void init_PCA9685() {
     I2C_write(PCA9685_ADDR, MODE1_AI_ALLCALL_DATA, 2);
 }
 
-void set_servo_position(uint8_t channel, uint16_t position) {
+void PCA9685_set_servo_position(uint8_t channel, uint16_t position) {
     if(channel > 15){
         return;
     }

@@ -29,9 +29,9 @@
 // void set_basic_servo_angle(uint8_t channel, uint8_t angle_deg);
 
 // Initialize PCA9685 to 50 Hz PWM (writes PRESCALE and MODE1 registers).
-void init_PCA9685(void);
+void PCA9685_init(void);
 
 // Set PWM on channel [0..15], position = 12-bit (0..4095).
-void set_servo_position(uint8_t channel, uint16_t position);
+void PCA9685_set_servo_position(uint8_t channel, uint16_t position);
 
 #endif 
