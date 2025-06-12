@@ -15,9 +15,9 @@
 #define LED_OFF_L(channel) (LED0_OFF_L + 4 * (channel))
 #define LED_OFF_H(channel) (LED0_OFF_H + 4 * (channel))
 
-#define SERVO_DEG_PULSE_45  0x110
-#define SERVO_DEG_PULSE_90  0x181   
-#define SERVO_DEG_PULSE_135 0x1F1
+#define SERVO_DEG_PULSE_45  252
+#define SERVO_DEG_PULSE_90  365   
+#define SERVO_DEG_PULSE_135 477
 
 // Initialize PCA9685 to 50 Hz PWM (writes PRESCALE and MODE1 registers).
 void PCA9685_init(void);
