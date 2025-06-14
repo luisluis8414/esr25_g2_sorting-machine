@@ -1,12 +1,19 @@
 #include <msp430.h> 
+#include "Board.h"
 #include <driverlib.h>
 #include "I2C/I2C.h"
 #include "lcd1602_display/lcd1602.h"
+
+//Target frequency for MCLK in kHz
+#define CS_MCLK_DESIRED_FREQUENCY_IN_KHZ   1000
+//MCLK/FLLRef Ratio
+#define CS_MCLK_FLLREF_RATIO   30
 
 // Der PCF8574 Baustein hat folgende 7-Bit Adresse: 0x3F (dez 63) : 0011 1111
 // Somit ergibt sich f�r Schreibzugriffe folgender Adresswert: 0111 1110 = 0x7E
 // Die Driverlib erwartet jedoch die Angabe der tats�chlichen 7-Bit Adresse, also 0x3F
 #define SLAVE_ADDRESS_LCD 0x3F
+
 void init_gpio(void);
 void init_timer(void);
 void init_cs(void);
@@ -20,11 +27,10 @@ void sleep(uint16_t ms);
  */
 int main(void)
 {
-	const char s1[17] = "Sortiermaschine ";
-	const char s2[17] = "ist bereit......";
+	char s1[17] = "Testprogramm    ";
+	char s2[17] = "Display geht    ";
 	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
     init_timer();
-	//I2C_init();
     init_cs();
 	init_i2c();
     PMM_unlockLPM5();
@@ -42,8 +48,6 @@ int main(void)
         lcd1602_backlight(!lcd1602_getBacklightState());
         sleep(1000);
     }
-	
-	return 0;
 }
 
 void init_timer(void) {
@@ -83,6 +87,32 @@ void init_cs(void) {
 
     //Enable oscillator fault interrupt
     SFR_enableInterrupt(SFR_OSCILLATOR_FAULT_INTERRUPT);
+}
+void init_i2c(void) {
+    EUSCI_B_I2C_initMasterParam param = {0};
+
+    // Configure Pins for I2C
+    /*
+    * Select Port 1
+    * Set Pin 2, 3 to input with function, (UCB0SIMO/UCB0SDA, UCB0SOMI/UCB0SCL).
+    */
+
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_UCB0SCL, GPIO_PIN_UCB0SCL, GPIO_FUNCTION_UCB0SCL);
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_UCB0SDA, GPIO_PIN_UCB0SDA, GPIO_FUNCTION_UCB0SDA);
+
+    param.selectClockSource = EUSCI_B_I2C_CLOCKSOURCE_SMCLK;
+    param.i2cClk = CS_getSMCLK();
+    param.dataRate = EUSCI_B_I2C_SET_DATA_RATE_100KBPS;
+    param.byteCounterThreshold = 1;
+    param.autoSTOPGeneration = EUSCI_B_I2C_NO_AUTO_STOP;
+    EUSCI_B_I2C_initMaster(EUSCI_B0_BASE, &param);
+
+    //Specify slave address
+    EUSCI_B_I2C_setSlaveAddress(EUSCI_B0_BASE, SLAVE_ADDRESS_LCD);
+    //Set in transmit mode
+    EUSCI_B_I2C_setMode(EUSCI_B0_BASE, EUSCI_B_I2C_TRANSMIT_MODE);
+    //Enable I2C Module to start operations
+    EUSCI_B_I2C_enable(EUSCI_B0_BASE);
 }
 
 // Die Funktion kehrt erst dann zur�ck, wenn Timer0_B3 die angegebene Anzahl von
