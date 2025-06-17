@@ -1,24 +1,50 @@
-#include <msp430.h>
+#include <msp430.h> 
+#include "PCA9685/PCA9685.h"
+#include <stdint.h>
+#include "platform/platform.h"
 #include "I2C/I2C.h"
-#include "TCS34725/tcs.h"
+#include "timer/timer.h"
 
-uint16_t r = 0, g = 0, b = 0, c = 0;
-
+void init() {
+    I2C_init();
+	PCA9685_init();
+    timer_init();
+}
 
 int main(void)
 {
-    WDTCTL = WDTPW | WDTHOLD;
+	WDTCTL = WDTPW | WDTHOLD;
+    PM5CTL0 &= ~LOCKLPM5;  
 
-    I2C_init();    // Dein vorhandener Code
-    tcs_init();    // Sensor initialisieren
+    init();
 
-    while (1)
-    {
-        tcs_read_rgbc(&r, &g, &b, &c);
-        __no_operation();
+    while (1) {
+    plattform_default_position();
 
-    
+    timer_sleep_ms(2000);
 
-        __delay_cycles(1000000); // Warte 1 Sekunde bei 1 MHz
+    plattform_empty_r();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_g();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_b();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
     }
 }
