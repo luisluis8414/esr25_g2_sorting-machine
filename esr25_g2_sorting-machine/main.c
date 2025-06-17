@@ -1,25 +1,53 @@
 #include <msp430.h> 
+#include "PCA9685/PCA9685.h"
+#include <stdint.h>
+#include "platform/platform.h"
 #include "I2C/I2C.h"
 #include "timer/timer.h"
+
+void init() {
+    I2C_init();
+	PCA9685_init();
+    timer_init();
+}
 
 /**
  * main.c
  */
 int main(void)
 {
-	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
-	PM5CTL0 &= ~LOCKLPM5;
+	WDTCTL = WDTPW | WDTHOLD;
+    PM5CTL0 &= ~LOCKLPM5;  
 
-	timer_init();
+    init();
 
-	P1DIR |= BIT0;  // P1.0 als Ausgang
-    P1OUT &= ~BIT0; // LED aus
+    while (1) {
+    plattform_default_position();
 
-	__bis_SR_register(GIE);
+    timer_sleep_ms(2000);
 
-	while(1){
-		P1OUT ^= BIT0; 
+    plattform_empty_r();
 
-		timer_sleep_ms(10000);
-	}	
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_g();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_b();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+    }
 }
