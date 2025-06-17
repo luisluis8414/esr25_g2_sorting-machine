@@ -8,6 +8,7 @@
 void init() {
     I2C_init();
 	PCA9685_init();
+    timer_init();
 }
 
 /**
@@ -23,30 +24,30 @@ int main(void)
     while (1) {
     plattform_default_position();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_empty_r();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_default_position();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_empty_g();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_default_position();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_empty_b();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
 
     plattform_default_position();
 
-    __delay_cycles(2000000);
+    timer_sleep_ms(2000);
     }
 }
