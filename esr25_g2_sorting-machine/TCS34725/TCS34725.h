@@ -17,9 +17,15 @@
 #define TCS34725_GDATAL      0x18
 #define TCS34725_BDATAL      0x1A
 
+/* Calibration factors from a white reference (optional) */
+#define CAL_R 1.00f
+#define CAL_G 1.00f
+#define CAL_B 1.00f
+
 // Funktionen
 void tcs_init(void);
-uint16_t tcs_read16(uint8_t reg);
+uint16_t read_16bit_reg(uint8_t reg);
 void tcs_read_rgbc(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+void tcs_get_rgb888(uint8_t *r8, uint8_t *g8, uint8_t *b8);
 
 #endif /* TCS_H_ */

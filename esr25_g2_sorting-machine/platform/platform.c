@@ -22,6 +22,8 @@ void plattform_default_position(void) {
 void plattform_empty(void) {
     timer_sleep_ms(500);
     PCA9685_set_servo_position(4, SERVO_DEG_PULSE_45);
+    timer_sleep_ms(1000);
+    plattform_default_position();
 }
 
 /**
