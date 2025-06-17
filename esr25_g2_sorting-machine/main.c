@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "platform/platform.h"
 #include "I2C/I2C.h"
+#include "timer/timer.h"
 
 void init() {
     I2C_init();
