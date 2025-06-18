@@ -51,3 +51,98 @@ int main(void)
     timer_sleep_ms(2000);
     }
 }
+
+void init_timer(void) {
+    static Timer_B_initUpModeParam param = {0};
+
+    param.clockSource = TIMER_B_CLOCKSOURCE_SMCLK;
+    param.clockSourceDivider = TIMER_B_CLOCKSOURCE_DIVIDER_1;
+    param.timerPeriod = 999;        // wenn 1000 Taktimpulse gez�hlt
+                                    // wurden, erfolgt ein Interrupt
+                                    // Periodendauer somit 1ms
+    param.timerInterruptEnable_TBIE =
+            TIMER_B_TBIE_INTERRUPT_DISABLE;         // no interrupt on 0x0000
+    param.captureCompareInterruptEnable_CCR0_CCIE =
+        TIMER_B_CAPTURECOMPARE_INTERRUPT_ENABLE;    // interrupt on TRmax
+    param.timerClear = TIMER_B_DO_CLEAR;
+    param.startTimer = true;
+
+    // start Timer:
+    Timer_B_initUpMode(TB0_BASE, &param);
+}
+
+void init_cs(void) {
+    //Set DCO FLL reference = REFO
+    CS_initClockSignal(CS_FLLREF, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+
+    //Set ACLK = REFO
+    CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+
+    //Create struct variable to store proper software trim values
+    CS_initFLLParam param = {0};
+
+    //Set Ratio/Desired MCLK Frequency, initialize DCO, save trim values
+    CS_initFLLCalculateTrim(CS_MCLK_DESIRED_FREQUENCY_IN_KHZ, CS_MCLK_FLLREF_RATIO, &param);
+
+    //Clear all OSC fault flag
+    CS_clearAllOscFlagsWithTimeout(1000);
+
+    //Enable oscillator fault interrupt
+    SFR_enableInterrupt(SFR_OSCILLATOR_FAULT_INTERRUPT);
+}
+void init_i2c(void) {
+    EUSCI_B_I2C_initMasterParam param = {0};
+
+    // Configure Pins for I2C
+    /*
+    * Select Port 1
+    * Set Pin 2, 3 to input with function, (UCB0SIMO/UCB0SDA, UCB0SOMI/UCB0SCL).
+    */
+
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_UCB0SCL, GPIO_PIN_UCB0SCL, GPIO_FUNCTION_UCB0SCL);
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_UCB0SDA, GPIO_PIN_UCB0SDA, GPIO_FUNCTION_UCB0SDA);
+
+    param.selectClockSource = EUSCI_B_I2C_CLOCKSOURCE_SMCLK;
+    param.i2cClk = CS_getSMCLK();
+    param.dataRate = EUSCI_B_I2C_SET_DATA_RATE_100KBPS;
+    param.byteCounterThreshold = 1;
+    param.autoSTOPGeneration = EUSCI_B_I2C_NO_AUTO_STOP;
+    EUSCI_B_I2C_initMaster(EUSCI_B0_BASE, &param);
+
+    //Specify slave address
+    EUSCI_B_I2C_setSlaveAddress(EUSCI_B0_BASE, SLAVE_ADDRESS_LCD);
+    //Set in transmit mode
+    EUSCI_B_I2C_setMode(EUSCI_B0_BASE, EUSCI_B_I2C_TRANSMIT_MODE);
+    //Enable I2C Module to start operations
+    EUSCI_B_I2C_enable(EUSCI_B0_BASE);
+}
+
+// Die Funktion kehrt erst dann zur�ck, wenn Timer0_B3 die angegebene Anzahl von
+// ms absolviert hat. Unbedingt beachten: Diese einfache Implementierung eines
+// sleep-Timers funktioniert nur, solange kein Interrupt nesting verwendet wird.
+// W�hrend der sleep-Perioden des Timer k�nnen andere Interrupt-Routinen ausgef�hrt
+// werden; diese d�rfen aber nicht in die main loop zur�ckkehren, sondern m�ssen
+// den aktuellen sleep mode beim Verlassen der ISR wieder herstellen.
+void sleep(uint16_t ms) {
+    while (ms--) LPM0;
+}
+
+#pragma vector=UNMI_VECTOR
+__interrupt void NMI_ISR(void)
+{
+    uint16_t status;
+    do {
+        // If it still can't clear the oscillator fault flags after the timeout,
+        // trap and wait here.
+        status = CS_clearAllOscFlagsWithTimeout(1000);
+    } while(status != 0);
+}
+
+
+// TimerB0 Interrupt Vector (TBxIV) handler
+#pragma vector=TIMER0_B0_VECTOR
+__interrupt void TIMER0_B0_ISR(void)
+{
+    __bic_SR_register_on_exit(LPM0_bits);
+}
+
