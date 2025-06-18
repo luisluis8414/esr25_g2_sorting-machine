@@ -1,52 +1,54 @@
 #include <msp430.h> 
-#include "Board.h"
-#include <driverlib.h>
+#include "PCA9685/PCA9685.h"
+#include <stdint.h>
+#include "platform/platform.h"
 #include "I2C/I2C.h"
-#include "lcd1602_display/lcd1602.h"
+#include "timer/timer.h"
 
-//Target frequency for MCLK in kHz
-#define CS_MCLK_DESIRED_FREQUENCY_IN_KHZ   1000
-//MCLK/FLLRef Ratio
-#define CS_MCLK_FLLREF_RATIO   30
-
-// Der PCF8574 Baustein hat folgende 7-Bit Adresse: 0x3F (dez 63) : 0011 1111
-// Somit ergibt sich f�r Schreibzugriffe folgender Adresswert: 0111 1110 = 0x7E
-// Die Driverlib erwartet jedoch die Angabe der tats�chlichen 7-Bit Adresse, also 0x3F
-#define SLAVE_ADDRESS_LCD 0x3F
-
-void init_gpio(void);
-void init_timer(void);
-void init_cs(void);
-void init_i2c(void);
-void sleep(uint16_t ms);
-
-
+void init() {
+    I2C_init();
+	PCA9685_init();
+    timer_init();
+}
 
 /**
  * main.c
  */
 int main(void)
 {
-	char s1[17] = "Testprogramm    ";
-	char s2[17] = "Display geht    ";
-	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
-    init_timer();
-    init_cs();
-	init_i2c();
-    PMM_unlockLPM5();
-    __bis_SR_register(GIE);     //Enable global interrupt
+	WDTCTL = WDTPW | WDTHOLD;
+    PM5CTL0 &= ~LOCKLPM5;  
 
-    lcd1602_init();
-    lcd1602_backlight(true);
+    init();
 
     while (1) {
-        lcd1602_write(1,s1);
-        lcd1602_write(2,s2);
-        sleep(1000);
-        lcd1602_clear();
-        sleep(1000);
-        lcd1602_backlight(!lcd1602_getBacklightState());
-        sleep(1000);
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_r();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_g();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
+
+    plattform_empty_b();
+
+    timer_sleep_ms(2000);
+
+    plattform_default_position();
+
+    timer_sleep_ms(2000);
     }
 }
 
