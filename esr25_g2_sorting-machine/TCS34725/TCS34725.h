@@ -19,7 +19,8 @@
  * bei und stellt sicher, dass alle Werte in den 8-Bit Bereich passen ohne Divisionen.
  *
  * @note Dieser Treiber benötigt eine funktionsfähige I²C-Schnittstelle und nimmt an,
- *       dass der Sensor am Standard-I²C-Bus angeschlossen ist.
+ *       dass der Sensor am Standard-I²C-Bus angeschlossen ist. Vor Verwendung anderer
+ *       Funktionen muss die init() Methode aufgerufen werden.
  */
 
 #ifndef TCS_H_

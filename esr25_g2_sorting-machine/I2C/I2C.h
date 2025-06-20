@@ -17,7 +17,8 @@
  * Routine behandelt. Die Funktionen versetzen die CPU 
  * in LPM0 bis die entsprechende STOP-Bedingung generiert wurde.
  *
- * @note Detzt voraus, dass SMCLK mit 1 MHz läuft.
+ * @note Detzt voraus, dass SMCLK mit 1 MHz läuft. Vor Verwendung 
+ *       anderer Funktionen muss die init() Methode aufgerufen werden.
  */
 
 #ifndef I2C_I2C_H_

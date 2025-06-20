@@ -18,6 +18,7 @@
  * und bietet vordefinierte Konstanten für die Kippplatform.
  *
  * @note Dieser Treiber benötigt eine funktionsfähige I²C-Schnittstelle.
+ *       Vor Verwendung anderer Funktionen muss die init() Methode aufgerufen werden.
  */
 
 #ifndef PCA9685_H
