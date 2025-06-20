@@ -11,7 +11,7 @@ void init()
     I2C_init();
     PCA9685_init();
     timer_init();
-    tcs_init();
+    TCS_init();
 
     // --- Button P2.3 setup with interrupt ---
     P2DIR &= ~BIT3;     // input
@@ -26,19 +26,16 @@ void init()
 void do_sort()
 {
     uint8_t r, g, b;
-    tcs_get_rgb888(&r, &g, &b);
+    TCS_get_rgb888(&r, &g, &b);
 
-    if (r > 200 && g < 80 && b < 80)
-    {
-        plattform_empty_r();
+    if (r > g && r > b) {
+        plattform_empty_r();  // Red is dominant
     }
-    else if (g > 200 && r < 80 && b < 120)
-    {
-        plattform_empty_g();
+    else if (g > b) {
+        plattform_empty_g();  // Green is dominant
     }
-    else if (b > 200 && r < 80 && g < 200)
-    {
-        plattform_empty_b();
+    else {
+        plattform_empty_b();  // Blue is dominant
     }
 
     timer_sleep_ms(200);
