@@ -78,6 +78,25 @@
  */
 #define CMD(reg) (TCS34725_COMMAND_BIT | (reg))
 
+
+/**
+ * @brief Generiert ein Command-Byte mit Auto-Increment für den Registerzugriff.
+ *
+ * Zusätzlich zum obligatorischen Command-Bit (Bit 7) wird hier Bit 5 (TYPE = 01)
+ * gesetzt. Damit aktiviert man den Auto-Increment-Modus des TCS34725:
+ *
+ *  ▸ Beim Schreiben werden aufeinanderfolgende Datenbytes automatisch in
+ *    die nächsthöhere Registeradresse abgelegt.
+ *  ▸ Beim Lesen liest der Sensor nach jedem Byte automatisch das nächste
+ *    Register aus.
+ *
+ *
+ * @param reg  Start-Registeradresse.
+ * @return     Command-Byte für Auto-Increment-Übertragungen.
+ */
+#define CMD_AI(reg)  (TCS34725_COMMAND_BIT | 0x20 | (reg))
+
+
 /* ========================================================================== */
 /* Funktionen                                                                 */
 /* ========================================================================== */
@@ -138,5 +157,19 @@ void tcs_read_rgbc(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
  * @warning Dies ist nicht geeignet für akkurate Farbbestitmmung.
  */
 void TCS_get_rgb888(uint8_t *r8, uint8_t *g8, uint8_t *b8);
+
+/**
+ * @brief Schaltet die TCS34725 LED ein.
+ */
+void TCS_led_on(void);
+
+/**
+ * @brief Schaltet die TCS34725 LED aus.
+ */
+void TCS_led_off(void);
+
+void setupWakeOnDarkness(void);
+
+ void TCS_clear_int(void);
 
 #endif /* TCS_H_ */

@@ -38,7 +38,6 @@ void do_sort()
         plattform_empty_b();  // Blue is dominant
     }
 
-    timer_sleep_ms(200);
 }
 
 int main(void)
@@ -52,9 +51,15 @@ int main(void)
     plattform_default_position();
     while (1)
     {
-        __bis_SR_register(LPM3_bits + GIE);  // sleep until button interrupt
+        __bis_SR_register(LPM3_bits + GIE);  // sleep until interrupt
 
+        timer_sleep_ms(1000); // wait for ob
+        
         do_sort();
+
+        timer_sleep_ms(1000);
+
+        TCS_clear_int();
     }
 }
 
