@@ -1,14 +1,33 @@
 #include <msp430.h> 
-#include "PCA9685/PCA9685.h"
 #include <stdint.h>
+#include <driverlib.h>
+
+#include "PCA9685/PCA9685.h"
 #include "platform/platform.h"
+#include "lcd1602_display/lcd1602_manager.h"
+#include "lcd1602_display/lcd1602.h"
 #include "I2C/I2C.h"
 #include "timer/timer.h"
+#include "Board.h"
+#include "button/button.h"
+
+//Target frequency for MCLK in kHz
+#define CS_MCLK_DESIRED_FREQUENCY_IN_KHZ   1000
+//MCLK/FLLRef Ratio
+#define CS_MCLK_FLLREF_RATIO   30
+// Der PCF8574 Baustein hat folgende 7-Bit Adresse: 0x3F (dez 63) : 0011 1111
+// Somit ergibt sich f r Schreibzugriffe folgender Adresswert: 0111 1110 = 0x7E
+// Die Driverlib erwartet jedoch die Angabe der tats chlichen 7-Bit Adresse, also 0x3F
+#define SLAVE_ADDRESS_LCD 0x3F
+
 
 void init() {
-    I2C_init();
-	PCA9685_init();
+    init_cs();
+    init_i2c();
+	//PCA9685_init();
+    button_init();
     timer_init();
+    lcd1602_init();
 }
 
 /**
@@ -18,11 +37,22 @@ int main(void)
 {
 	WDTCTL = WDTPW | WDTHOLD;
     PM5CTL0 &= ~LOCKLPM5;  
-
+    __bis_SR_register(GIE);
+    P1DIR |= BIT0; 
+    P1OUT &= ~BIT0;
     init();
 
+
+    timer_sleep_ms(2000);
+
+
     while (1) {
-    plattform_default_position();
+    __bis_SR_register(LPM3_bits + GIE); 
+
+    timer_sleep_ms(2000);
+
+
+    /*plattform_default_position();
 
     timer_sleep_ms(2000);
 
@@ -49,6 +79,7 @@ int main(void)
     plattform_default_position();
 
     timer_sleep_ms(2000);
+    */
     }
 }
 
@@ -90,6 +121,7 @@ void init_cs(void) {
     //Enable oscillator fault interrupt
     SFR_enableInterrupt(SFR_OSCILLATOR_FAULT_INTERRUPT);
 }
+
 void init_i2c(void) {
     EUSCI_B_I2C_initMasterParam param = {0};
 
@@ -117,16 +149,6 @@ void init_i2c(void) {
     EUSCI_B_I2C_enable(EUSCI_B0_BASE);
 }
 
-// Die Funktion kehrt erst dann zur�ck, wenn Timer0_B3 die angegebene Anzahl von
-// ms absolviert hat. Unbedingt beachten: Diese einfache Implementierung eines
-// sleep-Timers funktioniert nur, solange kein Interrupt nesting verwendet wird.
-// W�hrend der sleep-Perioden des Timer k�nnen andere Interrupt-Routinen ausgef�hrt
-// werden; diese d�rfen aber nicht in die main loop zur�ckkehren, sondern m�ssen
-// den aktuellen sleep mode beim Verlassen der ISR wieder herstellen.
-void sleep(uint16_t ms) {
-    while (ms--) LPM0;
-}
-
 #pragma vector=UNMI_VECTOR
 __interrupt void NMI_ISR(void)
 {
@@ -137,12 +159,3 @@ __interrupt void NMI_ISR(void)
         status = CS_clearAllOscFlagsWithTimeout(1000);
     } while(status != 0);
 }
-
-
-// TimerB0 Interrupt Vector (TBxIV) handler
-#pragma vector=TIMER0_B0_VECTOR
-__interrupt void TIMER0_B0_ISR(void)
-{
-    __bic_SR_register_on_exit(LPM0_bits);
-}
-

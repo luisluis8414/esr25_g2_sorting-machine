@@ -1,8 +1,8 @@
 /*
  * lcd1602.h
  *
- *  Created on: 14.07.2020
- *      Author: steddins
+ *  Created on: 22.06.2025
+ *      Author: raachl
  */
 
 #ifndef LCD1602_H_
