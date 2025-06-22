@@ -41,7 +41,6 @@ __interrupt void Port_4_ISR(void)
 {
     if (P4IFG & BIT1) {
         P4IFG &= ~BIT1; // Flag löschen
-        P1OUT ^= BIT0;
         // Button4Event();
         lcd1602_backlight(1);
         writeCurrentCount(12, 8, 5, 7);
@@ -55,7 +54,6 @@ __interrupt void Port_2_ISR(void)
 {
     if (P2IFG & BIT3) {
         P2IFG &= ~BIT3; // Flag löschen
-        P1OUT ^= BIT0;
         //Button2Event();
         //lcd1602_backlight(0);
         writeDetectedColor(BLUE);

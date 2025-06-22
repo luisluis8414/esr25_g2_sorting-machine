@@ -38,8 +38,6 @@ int main(void)
 	WDTCTL = WDTPW | WDTHOLD;
     PM5CTL0 &= ~LOCKLPM5;  
     __bis_SR_register(GIE);
-    P1DIR |= BIT0; 
-    P1OUT &= ~BIT0;
     init();
 
 
@@ -48,7 +46,6 @@ int main(void)
 
     while (1) {
     __bis_SR_register(LPM3_bits + GIE); 
-
     timer_sleep_ms(2000);
 
 

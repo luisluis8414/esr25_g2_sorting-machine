@@ -43,7 +43,7 @@ void timer_sleep_ms(uint16_t sleep_ms)
 
     TB0CCR0 = timer_count;        /* Load compare register                */
     TB0CTL |= MC__UP;             /* Start timer                          */
-    LPM3;                         /* Sleep until CCR0 ISR                 */
+    __bis_SR_register(LPM3_bits + GIE); /* Sleep until CCR0 ISR */
     TB0CTL &= ~MC__UP;            /* Stop timer                           */
     TB0CTL |= MC__STOP;
 }
