@@ -10,23 +10,24 @@
  *
  * Dieses Modul bietet eine einfache Schnittstelle zum TCS34725 RGB-Farbsensor
  * über I²C-Kommunikation. Der Treiber bietet grundlegende Funktionalität für:
- *   - tcs_init()         – Sensor mit 100ms Integration, 4x Verstärkung initialisieren
- *   - tcs_read_rgbc()    – Rohe 16-Bit RGBC-Werte vom Sensor lesen
- *   - tcs_get_rgb888()   – Rohe Werte zu 8-Bit RGB für Farberkennung konvertieren
+ *   - TCS_init()         – Sensor mit 100ms Integration, 4x Verstärkung initialisieren
+ *   - TCS_read_16bit_reg() – 16-Bit Register vom Sensor lesen
+ *   - TCS_read_clear()   – Clear-Kanal-Wert lesen
+ *   - TCS_get_rgbc()     – RGBC-Werte lesen und zu 8-Bit RGB konvertieren
+ *   - TCS_led_on/off()   – LED-Steuerung
  *
  * Die Konvertierung zu 8-Bit RGB ist vereinfacht und für Farbunterscheidung
  * optimiert, nicht für akkurate Farbwiedergabe. Sie erhält relative Farbverhältnisse
- * bei und stellt sicher, dass alle Werte in den 8-Bit Bereich passen ohne Divisionen.
+ * und stellt sicher, dass alle Werte in den 8-Bit Bereich passen.
  *
  * @note Dieser Treiber benötigt eine funktionsfähige I²C-Schnittstelle und nimmt an,
  *       dass der Sensor am Standard-I²C-Bus angeschlossen ist. Vor Verwendung anderer
- *       Funktionen muss die init() Methode aufgerufen werden.
+ *       Funktionen muss die TCS_init() Methode aufgerufen werden.
  */
 
-#ifndef TCS_H_
-#define TCS_H_
+#ifndef TCS34725_H_
+#define TCS34725_H_
 
-#include "TCS34725/TCS34725.h"
 #include <stdint.h>
 
 /* ========================================================================== */
@@ -77,8 +78,7 @@
  * @param reg Registeradresse für Zugriff.
  * @return Command-Byte bereit für I²C-Übertragung.
  */
-#define CMD(reg) (TCS34725_COMMAND_BIT | (reg))
-
+#define TCS_CMD(reg) (TCS34725_COMMAND_BIT | (reg))
 
 /**
  * @brief Generiert ein Command-Byte mit Auto-Increment für den Registerzugriff.
@@ -91,12 +91,10 @@
  *    Beim Lesen liest der Sensor nach jedem Byte automatisch das nächste
  *    Register aus.
  *
- *
  * @param reg  Start-Registeradresse.
  * @return     Command-Byte für Auto-Increment-Übertragungen.
  */
-#define CMD_AI(reg)  (TCS34725_COMMAND_BIT | 0x20 | (reg))
-
+#define TCS_CMD_AI(reg)  (TCS34725_COMMAND_BIT | 0x20 | (reg))
 
 /* ========================================================================== */
 /* Funktionen                                                                 */
@@ -108,20 +106,20 @@
  * Konfiguriert den Sensor mit Standardeinstellungen:
  *   - Integrationszeit: 100ms 
  *   - Verstärkung: 4x (moderate Empfindlichkeit)
- *   - Strom: EIN mit aktiviertem ADC
+ *   - Lichtschranken-Schwellenwerte für Interrupt-Funktionalität
+ *   - Persistenz auf 1 Ereignis
+ *   - Sensor wird nach Initialisierung in Schlafmodus versetzt
  *
- * @note 2,4ms + Integrationszeit nach der Initialisierung bevor
- *       gültige Messungen gelesen werden können.
+ * @note Der Sensor wird nach der Initialisierung ausgeschaltet und muss
+ *       für Messungen explizit aktiviert werden.
  */
 void TCS_init(void);
 
-void TCS_single_shot_sleep(uint16_t *c_out);
-
 /**
- * @brief Liest einen 16-Bit Wert vom TCS aus.
+ * @brief Liest einen 16-Bit Wert vom TCS34725 aus.
  *
  * Liest zwei aufeinanderfolgende Register und kombiniert sie zu einem 16-Bit Wert.
- * Little-Endian Reihenfolge
+ * Little-Endian Reihenfolge (Low-Byte zuerst).
  *
  * @param[in] reg Startregisteradresse (Low-Byte).
  * @return Kombinierter 16-Bit Wert aus dem Registerpaar.
@@ -129,51 +127,52 @@ void TCS_single_shot_sleep(uint16_t *c_out);
 uint16_t TCS_read_16bit_reg(uint8_t reg);
 
 /**
- * @brief Liest rohe RGBC-Werte vom TCS34725 Sensor.
+ * @brief Liest den Clear-Kanal-Wert vom TCS34725.
  *
- * Ruft alle vier raw 16-Bit Farbkanalwerte vom Sensor ab.
- * Werte repräsentieren Lichtintensität und hängen von Integrationszeit
- * und Verstärkungseinstellungen ab.
+ * Aktiviert den Sensor, führt eine Messung durch und liest den Clear-Kanal aus.
+ * Der Sensor wird nach der Messung wieder ausgeschaltet.
  *
- * @param[out] r Pointer zum Speichern des Rot-Kanal Werts.
- * @param[out] g Pointer zum Speichern des Grün-Kanal Werts.
- * @param[out] b Pointer zum Speichern des Blau-Kanal Werts.
- * @param[out] c Pointer zum Speichern des Clear-Kanal Werts.
+ * @param[out] clear Pointer zum Speichern des 16-Bit Clear-Kanal-Werts.
+ *
+ * @note Die Funktion wartet die komplette Integrationszeit (120ms) ab.
  */
-void TCS_single_shot_rgb(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+void TCS_read_clear(uint16_t *clear);
 
 /**
- * @brief Konvertiert rohe Sensorwerte zu 8-Bit RGB für Farberkennung.
+ * @brief Liest RGBC-Werte und konvertiert zu 8-Bit RGB für Farberkennung.
  *
- * Führt eine vereinfachte Konvertierung von 16 Bit Rohwerten zu 8 Bit RBG Werten durch.
- * Dies ist KEINE akkurate RGB-Konvertierung!
- * Aber ausreichend für grundlegende Farbunterscheidung (rot vs grün vs blau).
+ * Aktiviert den Sensor mit LED, führt eine Messung durch und konvertiert
+ * die rohen 16-Bit Werte zu 8-Bit RGB-Werten. Die Konvertierung ist für
+ * Farbunterscheidung optimiert, nicht für akkurate Farbwiedergabe.
  *
  * Die Konvertierung:
  *   - Skaliert alle Kanäle proportional um Overflow zu verhindern
- *   - Verwendet Bit-Verschiebungen statt Division für Effizienz
+ *   - Verwendet Bit-Verschiebungen für Effizienz
+ *   - Erhält relative Farbverhältnisse
  *
- * @param[out] r8 Pointer zum Speichern des 8-Bit Rot-Werts.
- * @param[out] g8 Pointer zum Speichern des 8-Bit Grün-Werts.
- * @param[out] b8 Pointer zum Speichern des 8-Bit Blau-Werts.
+ * @param[out] r8  Pointer zum Speichern des 8-Bit Rot-Werts.
+ * @param[out] g8  Pointer zum Speichern des 8-Bit Grün-Werts.
+ * @param[out] b8  Pointer zum Speichern des 8-Bit Blau-Werts.
+ * @param[out] c16 Pointer zum Speichern des 16-Bit Clear-Kanal-Werts.
  *
- * @warning Dies ist nicht geeignet für akkurate Farbbestitmmung.
+ * @warning Dies ist nicht geeignet für akkurate Farbbestimmung oder
+ *          Farbtemperaturmessungen.
  */
-void TCS_get_rgb888(uint8_t *r8, uint8_t *g8, uint8_t *b8);
+void TCS_get_rgbc(uint8_t *r8, uint8_t *g8, uint8_t *b8, uint16_t *c16);
 
 /**
  * @brief Schaltet die TCS34725 LED ein.
+ *
+ * Aktiviert die weiße LED am Pin P1.7 für gleichmäßige Beleuchtung
+ * während der Farbmessung.
  */
 void TCS_led_on(void);
 
 /**
  * @brief Schaltet die TCS34725 LED aus.
+ *
+ * Deaktiviert die weiße LED am Pin P1.7 zur Energieeinsparung.
  */
 void TCS_led_off(void);
 
-void setupWakeOnDarkness(void);
-
- void TCS_clear_int(void);
-
-#endif /* TCS_H_ */
-
+#endif /* TCS34725_H_ */

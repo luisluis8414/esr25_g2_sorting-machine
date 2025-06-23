@@ -13,7 +13,7 @@ volatile uint16_t MIN_DELTA_CLR = 0;    // wie viel dunkler es mindestens sein m
 static void calibrate_clear(void)
 {
     uint16_t c;
-    TCS_single_shot_sleep(&c);   // LED aus – Umgebungslicht-Referenz
+    TCS_read_clear(&c);   // LED aus – Umgebungslicht-Referenz
     clear_ref = c;
     MIN_DELTA_CLR = c * 0.5f;
 }
@@ -40,7 +40,7 @@ void init()
 void do_sort()
 {
     uint8_t r, g, b;
-    TCS_get_rgb888(&r, &g, &b);
+    TCS_get_rgb(&r, &g, &b);
 
     if (r > g && r > b) {
         plattform_empty_r();  // Red is dominant
@@ -72,7 +72,7 @@ int main(void)
         }
 
         uint16_t clear;
-        TCS_single_shot_sleep(&clear);
+        TCS_read_clear(&clear);
 
         if (clear + MIN_DELTA_CLR < clear_ref) {
             do_sort();
