@@ -6,57 +6,68 @@
  * @author    wehrberger
  * @date      10.06.2025
  *
- * @brief     Timer-Modul für präzise Timingfunktionen.
+ * @brief     Timer-Modul mit Sleep- und System-Tick-Funktionalität.
  *
- * Dieses Modul bietet Timer basierte Verzögerungsfunktionen.
- * Es verwendet Timer_B0 mit ACLK (32.768 Hz Kristall) als Taktquelle und
- * versetzt den Mikrocontroller in LPM3 während der Verzögerung.
- *
- * Technische Details:
- *   - Taktquelle: ACLK (32.768 Hz)
- *   - Divider: ÷2 → 16.384 Hz Timer-Frequenz
- *   - Auflösung: ~0,061 ms pro Tick
- *   - Maximale Verzögerung: ~3998 ms (16-Bit Timer)
- *
- * Verfügbare Funktionen:
- *   - timer_init()      – Timer-Initialisierung
- *   - timer_sleep_ms()  – Blockierende Verzögerung in Millisekunden
- *
- * @note Der Timer muss vor der ersten Verwendung mit timer_init() 
- *       initialisiert werden.
+ * Dieses Modul kombiniert Timer-basierte Verzögerungsfunktionen mit
+ * System-Tick-Funktionalität für State-Machine-Anwendungen.
+ * - Timer_B0: System-Tick (ACLK / 2 = 16.384 Hz)
+ * - Timer_B1: Sleep-Funktionalität (ACLK / 2 = 16.384 Hz)
  */
 
 #ifndef TIMER_TIMER_H_
 #define TIMER_TIMER_H_
 
 #include <stdint.h>
+#include <stdbool.h>
+
+
+/* ========================================================================== */
+/* Globale Variablen                                                          */
+/* ========================================================================== */
+
+extern uint16_t guiSysTickCnt;
+volatile bool TIMER_SLEEP_MODE;
+
+/* ========================================================================== */
+/* Timer Funktionen                                                           */
+/* ========================================================================== */
 
 /**
- * @brief Initialisiert das Timer-Modul.
- *
- * Konfiguriert Timer_B0 für den Einsatz in Verzögerungsfunktionen:
- *   - Taktquelle: ACLK (32.768 Hz Kristall)
- *   - Divider: ÷2 für 16.384 Hz Timer-Frequenz
- *   - CCR0-Interrupt aktiviert für Aufwecken aus LPM3
- *
- * @note Diese Funktion muss vor der Verwendung anderer Timer Funktionen
- *       aufgerufen werden.
+ * @brief Initialisiert beide Timer-Module.
  */
 void timer_init(void);
 
 /**
  * @brief Blockiert die Programmausführung für eine bestimmte Zeit.
- *
- * Versetzt den MSP430 in den LPM3 für die angegebene Dauer.
- *
+ * 
+ * Verwendet Timer_B1 und interferiert nicht mit dem System-Tick.
+ * 
  * @param[in] sleep_ms Verzögerungszeit in ms (1-3998).
- *
- * @note Maximale Verzögerungszeit beträgt etwa 3998 ms aufgrund der
- *       16-Bit.
- *
- * @warning Die tatsächliche Verzögerung kann aufgrund der Timer-Auflösung
- *          um ±0,061 ms abweichen.
  */
 void timer_sleep_ms(uint16_t sleep_ms);
+
+/**
+ * @brief Initialisiert den System-Tick mit gegebener Periode.
+ * 
+ * @param[in] period_ms Tick-Periode in Millisekunden.
+ */
+void timer_systick_init(uint32_t period_ms);
+
+/**
+ * @brief Startet den System-Tick auf Timer_B0.
+ */
+void timer_systick_start(void);
+
+/**
+ * @brief Stoppt den System-Tick.
+ */
+void timer_systick_stop(void);
+
+/**
+ * @brief Blockiert bis zur angegebenen Anzahl von System-Ticks.
+ * 
+ * @param[in] sleep_ms Wartezeit in Millisekunden.
+ */
+void timer_systick_sleep(uint32_t sleep_ms);
 
 #endif /* TIMER_TIMER_H_ */
