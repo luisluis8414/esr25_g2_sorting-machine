@@ -12,38 +12,69 @@
     #include "TCS34725.h"
     #include "I2C/I2C.h"
     #include <msp430.h>
-    #include <math.h>
     #include "intrinsics.h"
     #include "timer/timer.h"
 
+    /* ------------------------------------------------------------------ */
+    /*  TCS_init()  – nur Parameter setzen, Sensor bleibt OFF   */
+    /* ------------------------------------------------------------------ */
     void TCS_init(void)
     {
-        // LED-Pin P1.7 als Ausgang konfigurieren und ausschalten
         P1DIR |= BIT7;
         P1OUT &= ~BIT7;
 
-        // Schritt 1: Nur Power-On aktivieren
-        char enable_pon[] = { CMD(TCS34725_ENABLE), 0x01 };
-        I2C_write(TCS34725_ADDRESS, enable_pon, 2);
+        /* PON an, um schreiben zu können (0x01) */
+        char pon[] = { CMD(TCS34725_ENABLE), 0x01 };
+        I2C_write(TCS34725_ADDRESS, pon, 2);
 
-        // 2.4ms Warm-Up Phase (laut Datenblatt)
-        timer_sleep_ms(5);
+        timer_sleep_ms(3);                       // min 2.4 ms Warm-up
 
-        // Schritt 2: Integration Time setzen – z.B. 100ms = ATIME = 0xD6
+        /* 100 ms Integration (0xD6) */
         char atime[] = { CMD(TCS34725_ATIME), 0xD6 };
         I2C_write(TCS34725_ADDRESS, atime, 2);
 
-        // Schritt 3: Verstärkung setzen – 0x01 = 4x Gain
-        char control[] = { CMD(TCS34725_CONTROL), 0x01 };
-        I2C_write(TCS34725_ADDRESS, control, 2);
+        /* Gain 4× */
+        char gain[]  = { CMD(TCS34725_CONTROL), 0x01 };
+        I2C_write(TCS34725_ADDRESS, gain, 2);
 
-        // Schritt 4: ADC aktivieren (AEN) → jetzt PON | AEN = 0x03
-        char enable_adc[] = { CMD(TCS34725_ENABLE), 0x03 };
-        I2C_write(TCS34725_ADDRESS, enable_adc, 2);
+        /* Lichtschranken-Schwelle: Clear < 0x0200  */
+        /* Lichtschranken-Schwelle: Clear < 0x0200 */
+        char thresholds[] = { 
+            CMD_AI(0x04),  // Auto-Increment ab AILTL
+            0xE8, 0x03,    // AILTL, AILTH (0x03E8 = 1000)
+            0xFF, 0xFF     // AIHTL, AIHTH (0xFFFF = max)
+        };
+        I2C_write(TCS34725_ADDRESS, thresholds, 5);
 
-        setupWakeOnDarkness();
+        /* Persistenz 1 Ereignis (optional) */
+        char pers[] = { CMD(0x0C), 0x01 };
+        I2C_write(TCS34725_ADDRESS, pers, 2);
 
-        TCS_clear_int();
+        /* Sensor wieder schlafen (PON = 0) */
+        char sleep[] = { CMD(TCS34725_ENABLE), 0x00 };
+        I2C_write(TCS34725_ADDRESS, sleep, 2);
+    }
+
+    void TCS_single_shot_sleep(uint16_t *c_out)
+    {
+        /* 1️⃣  Power-On (PON) */
+        char pon[] = { CMD(TCS34725_ENABLE), 0x01 };
+        I2C_write(TCS34725_ADDRESS, pon, 2);
+        timer_sleep_ms(3);                       // Warm-up ≥2.4 ms
+
+        /* 2️⃣  ADC starten (PON|AEN) */
+        char aen[] = { CMD(TCS34725_ENABLE), 0x03 };
+        I2C_write(TCS34725_ADDRESS, aen, 2);
+
+        /* 3️⃣  Einfach warten – kein Polling */
+        timer_sleep_ms(120);
+
+        /* 4️⃣  Clear-Kanal lesen */
+        *c_out = TCS_read_16bit_reg(TCS34725_CDATAL);
+
+        /* 5️⃣  Sensor vollständig ausschalten (PON = 0) */
+        char off[] = { CMD(TCS34725_ENABLE), 0x00 };
+        I2C_write(TCS34725_ADDRESS, off, 2);
     }
 
     uint16_t TCS_read_16bit_reg(uint8_t reg)
@@ -53,16 +84,35 @@
         return ((uint16_t)high << 8) | low;  // Little-Endian Kombination
     }
 
-    void TCS_read_rgbc(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c)
+    void TCS_single_shot_rgb(uint16_t *r, uint16_t *g,
+                         uint16_t *b, uint16_t *c)
     {
+        char buf[2];
+
+        /* Sensor ON (PON) */
+        buf[0] = CMD(TCS34725_ENABLE); buf[1] = 0x01;
+        I2C_write(TCS34725_ADDRESS, buf, 2);
+
         TCS_led_on();
 
-        timer_sleep_ms(200);
+        timer_sleep_ms(3);
 
+        /* ADC starten (AEN) */
+        buf[1] = 0x03;                               // PON | AEN
+        I2C_write(TCS34725_ADDRESS, buf, 2);
+
+        /* warten 120 ms (ATIME 100 ms + Reserve) */
+        timer_sleep_ms(120);
+
+        /* 4️⃣  RGBC auslesen */
         *c = TCS_read_16bit_reg(TCS34725_CDATAL);
         *r = TCS_read_16bit_reg(TCS34725_RDATAL);
         *g = TCS_read_16bit_reg(TCS34725_GDATAL);
         *b = TCS_read_16bit_reg(TCS34725_BDATAL);
+
+        /* Sensor OFF  */
+        buf[1] = 0x00;
+        I2C_write(TCS34725_ADDRESS, buf, 2);
 
         TCS_led_off();
     }
@@ -71,7 +121,7 @@
     {
         uint16_t r, g, b, c;
         
-        TCS_read_rgbc(&r, &g, &b, &c);
+        TCS_single_shot_rgb(&r, &g, &b, &c);
 
         if (!c) {
             *r8 = *g8 = *b8 = 0;
@@ -95,7 +145,6 @@
         *b8 = b;
     }
 
-
     void TCS_led_on(void)
     {
         P1OUT |= BIT7;  // LED einschalten
@@ -106,55 +155,4 @@
         P1OUT &= ~BIT7; // LED ausschalten
     }
 
-    void setupWakeOnDarkness(void)
-    {
-        // Schritt 1: Nur Power-On aktivieren
-        char enable_pon[] = { CMD(TCS34725_ENABLE), 0x01 };
-        I2C_write(TCS34725_ADDRESS, enable_pon, 2);
-
-        timer_sleep_ms(5);  // Wartezeit >2.4ms
-
-        // Schritt 2: Schwellen setzen (Clear-Kanal)
-        char ailtl[] = { CMD(0x04), 0xE8 };  // 0x03E8 = 1000
-        char ailth[] = { CMD(0x05), 0x03 };
-        char aihtl[] = { CMD(0x06), 0xFF };
-        char aihth[] = { CMD(0x07), 0xFF };
-        I2C_write(TCS34725_ADDRESS, ailtl, 2);
-        I2C_write(TCS34725_ADDRESS, ailth, 2);
-        I2C_write(TCS34725_ADDRESS, aihtl, 2);
-        I2C_write(TCS34725_ADDRESS, aihth, 2);
-
-        // Schritt 3: Interrupt-Persistenz
-        char pers[] = { CMD(0x0C), 0x01 };
-        I2C_write(TCS34725_ADDRESS, pers, 2);
-
-        // Schritt 4: Interrupt + ADC aktivieren
-        char enable_full[] = { CMD(TCS34725_ENABLE), 0x13 };  // PON | AEN | AIEN
-        I2C_write(TCS34725_ADDRESS, enable_full, 2);
-
-        // Schritt 5: MSP430 INT an P1.4 konfigurieren
-        P1DIR &= ~BIT4;
-        P1REN |= BIT4;
-        P1OUT |= BIT4;
-        P1IES |= BIT4;
-        P1IFG &= ~BIT4;
-        P1IE  |= BIT4;
-    }
-
-    void TCS_clear_int(void) {
-        char clear_int[] = { 0xE6 };  // Special Function: Clear Interrupt
-        I2C_write(TCS34725_ADDRESS, clear_int, 1);
-    }
-
-
-    #pragma vector=PORT1_VECTOR
-    __interrupt void PORT1_ISR(void)
-    {
-        if (P1IFG & BIT4)
-        {
-            P1IFG &= ~BIT4;                    // Flag löschen
-            __bic_SR_register_on_exit(LPM3_bits);  // CPU aufwecken
-
-            __no_operation();
-        }
-    }
+    

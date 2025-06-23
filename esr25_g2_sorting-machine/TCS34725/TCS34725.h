@@ -26,6 +26,7 @@
 #ifndef TCS_H_
 #define TCS_H_
 
+#include "TCS34725/TCS34725.h"
 #include <stdint.h>
 
 /* ========================================================================== */
@@ -85,9 +86,9 @@
  * Zusätzlich zum obligatorischen Command-Bit (Bit 7) wird hier Bit 5 (TYPE = 01)
  * gesetzt. Damit aktiviert man den Auto-Increment-Modus des TCS34725:
  *
- *  ▸ Beim Schreiben werden aufeinanderfolgende Datenbytes automatisch in
+ *    Beim Schreiben werden aufeinanderfolgende Datenbytes automatisch in
  *    die nächsthöhere Registeradresse abgelegt.
- *  ▸ Beim Lesen liest der Sensor nach jedem Byte automatisch das nächste
+ *    Beim Lesen liest der Sensor nach jedem Byte automatisch das nächste
  *    Register aus.
  *
  *
@@ -105,14 +106,16 @@
  * @brief Initialisiert den TCS34725 Farbsensor.
  *
  * Konfiguriert den Sensor mit Standardeinstellungen:
- *   - Integrationszeit: 100ms (ausgewogene Genauigkeit und Geschwindigkeit)
+ *   - Integrationszeit: 100ms 
  *   - Verstärkung: 4x (moderate Empfindlichkeit)
  *   - Strom: EIN mit aktiviertem ADC
  *
  * @note 2,4ms + Integrationszeit nach der Initialisierung bevor
- *       gültige Messungen gelesen werden.
+ *       gültige Messungen gelesen werden können.
  */
 void TCS_init(void);
+
+void TCS_single_shot_sleep(uint16_t *c_out);
 
 /**
  * @brief Liest einen 16-Bit Wert vom TCS aus.
@@ -137,7 +140,7 @@ uint16_t TCS_read_16bit_reg(uint8_t reg);
  * @param[out] b Pointer zum Speichern des Blau-Kanal Werts.
  * @param[out] c Pointer zum Speichern des Clear-Kanal Werts.
  */
-void tcs_read_rgbc(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+void TCS_single_shot_rgb(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
 
 /**
  * @brief Konvertiert rohe Sensorwerte zu 8-Bit RGB für Farberkennung.
@@ -173,3 +176,4 @@ void setupWakeOnDarkness(void);
  void TCS_clear_int(void);
 
 #endif /* TCS_H_ */
+

@@ -25,13 +25,13 @@ void timer_init(void)
 
 void timer_sleep_ms(uint16_t sleep_ms)
 {
+    if(sleep_ms > 3998) sleep_ms = 3998;
     // Millisekunden in Timer-Ticks umwandeln (ACLK / 2 = 16.384 Hz)
     // Berechnung: ticks = (ms · 16.384) / 1000
     uint32_t ticks32      = (uint32_t)sleep_ms * 16384UL;
     uint16_t timer_count  = (uint16_t)(ticks32 / 1000UL);
 
     if (timer_count == 0)         timer_count = 1;      // Mindestens 1 Tick
-    if (timer_count > 65535U)     timer_count = 65535U; // Auf 16-Bit begrenzen
 
     TB0CCR0 = timer_count;        // Compare-Register laden
     TB0CTL |= MC__UP;             // Timer starten

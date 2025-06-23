@@ -22,11 +22,11 @@ void plattform_default_position(void)
 
 void plattform_empty(void) 
 {
-    timer_sleep_ms(500);  // Kurze Verzögerung vor Bewegung
+    timer_sleep_ms(700);  // Kurze Verzögerung vor Bewegung
     
     // Plattform kippen zum Entleeren
-    PCA9685_set_servo_position(4, SERVO_DEG_PULSE_45);
-    timer_sleep_ms(1000);  // Zeit zum vollständigen Entleeren
+    PCA9685_set_servo_position(4, SERVO_DEG_PULSE_40);
+    timer_sleep_ms(1500);  // Zeit zum vollständigen Entleeren
     
     // Zurück zur Standardposition
     plattform_default_position();
@@ -34,8 +34,8 @@ void plattform_empty(void)
 
 void plattform_empty_r(void) 
 {
-    // Richtung auf Rot (45°) einstellen
-    PCA9685_set_servo_position(0, SERVO_DEG_PULSE_45);
+    // Richtung auf Rot (50°) einstellen
+    PCA9685_set_servo_position(0, SERVO_DEG_PULSE_50);
     plattform_empty();
 }
 
@@ -48,7 +48,7 @@ void plattform_empty_g(void)
 
 void plattform_empty_b(void) 
 {
-    // Richtung auf Blau (135°) einstellen
-    PCA9685_set_servo_position(0, SERVO_DEG_PULSE_135);
+    // Richtung auf Blau (120°) einstellen
+    PCA9685_set_servo_position(0, SERVO_DEG_PULSE_120);
     plattform_empty();
 }

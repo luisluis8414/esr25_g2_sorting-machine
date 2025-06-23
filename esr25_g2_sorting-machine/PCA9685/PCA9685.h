@@ -71,14 +71,23 @@
 
 /** Konstanten sind optimiert für die Kippplatform
 
-/** @brief PWM-Wert für 45° Servo-Position (≈ 1.23 ms Pulsweite). */
-#define SERVO_DEG_PULSE_45  252
+/** @brief PWM-Wert für 40° Servo-Position  (≈ 1.20 ms Pulsweite). */
+#define SERVO_DEG_PULSE_40   240
 
-/** @brief PWM-Wert für 90° Servo-Position (≈ 1.78 ms Pulsweite). */
-#define SERVO_DEG_PULSE_90  365
+/** @brief PWM-Wert für 50° Servo-Position  (≈ 1.30 ms Pulsweite). */
+#define SERVO_DEG_PULSE_50   265
+
+/** @brief PWM-Wert für 60° Servo-Position  (≈ 1.41 ms Pulsweite). */
+#define SERVO_DEG_PULSE_60   290
+
+/** @brief PWM-Wert für 90° Servo-Position  (≈ 1.78 ms Pulsweite). */
+#define SERVO_DEG_PULSE_90   365
+
+/** @brief PWM-Wert für 120° Servo-Position (≈ 2.15 ms Pulsweite). */
+#define SERVO_DEG_PULSE_120  440
 
 /** @brief PWM-Wert für 135° Servo-Position (≈ 2.33 ms Pulsweite). */
-#define SERVO_DEG_PULSE_135 477
+#define SERVO_DEG_PULSE_135  477
 
 /**
  * @brief Initialisiert den PCA9685 für 50 Hz PWM-Betrieb.

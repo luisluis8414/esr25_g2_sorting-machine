@@ -6,12 +6,26 @@
 #include "timer/timer.h"
 #include "TCS34725/TCS34725.h"
 
+volatile uint16_t clear_ref     = 0;   // Default-Schwelle beim Start
+volatile uint8_t  flag_calib    = 0;      // wird in ISR gesetzt
+volatile uint16_t MIN_DELTA_CLR = 0;    // wie viel dunkler es mindestens sein muss
+
+static void calibrate_clear(void)
+{
+    uint16_t c;
+    TCS_single_shot_sleep(&c);   // LED aus – Umgebungslicht-Referenz
+    clear_ref = c;
+    MIN_DELTA_CLR = c * 0.5f;
+}
+
 void init()
 {
     I2C_init();
     PCA9685_init();
     timer_init();
     TCS_init();
+
+    calibrate_clear();
 
     // --- Button P2.3 setup with interrupt ---
     P2DIR &= ~BIT3;     // input
@@ -51,15 +65,20 @@ int main(void)
     plattform_default_position();
     while (1)
     {
-        __bis_SR_register(LPM3_bits + GIE);  // sleep until interrupt
+        if (flag_calib) {                    
+            flag_calib = 0;
+            calibrate_clear();               
+            continue;                       
+        }
 
-        timer_sleep_ms(1000); // wait for ob
-        
-        do_sort();
+        uint16_t clear;
+        TCS_single_shot_sleep(&clear);
 
-        timer_sleep_ms(1000);
+        if (clear + MIN_DELTA_CLR < clear_ref) {
+            do_sort();
+        }
 
-        TCS_clear_int();
+        timer_sleep_ms(1000); 
     }
 }
 
@@ -70,6 +89,7 @@ __interrupt void PORT2_ISR(void)
     if (P2IFG & BIT3)
     {
         P2IFG &= ~BIT3;                     // clear flag
+        flag_calib = 1;  
         __bic_SR_register_on_exit(LPM3_bits); // wake main loop
     }
 }
