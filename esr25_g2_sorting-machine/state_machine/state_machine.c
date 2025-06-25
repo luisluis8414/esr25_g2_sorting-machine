@@ -114,7 +114,12 @@
 #include <stdbool.h>
 
 #include "state_machine/state_machine.h"
+#include "lcd1602_display/lcd1602.h"
+#include "lcd1602_display/lcd1602_manager.h"
 
+extern void writeCurrentCount(uint8_t current_count_all, uint8_t current_count_blue, uint8_t current_count_green, uint8_t current_count_red);
+extern void writeReady(void); 
+extern void writeDetectedColor(COLOR color);
 Event_t eventBits = EVT_NO_EVENT;
 
 Event_t getEvent (Event_t *event) {
@@ -148,12 +153,12 @@ void handleEvent_FSM(State_t *currentState, Event_t event) {
                 case EVT_NO_EVENT:
                     break;
                 case EVT_S1:
-                    // DisplayShowSortReady
+                    writeReady();
                     // Other configurations?
                     *currentState = ON_STATE;
                     break;
                 case EVT_S2:
-                    // DisplayShowCurrentCount
+                    writeCurrentCount(10, 4, 3, 3);
                     *currentState = DISPLAY_STATE;
                     break;
                 // case EVENT_COLOR_DETECTION -> do nothing
@@ -167,6 +172,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event) {
                 case EVT_NO_EVENT:
                     break;
                 case EVT_S1:
+                    writeReady();
                     // DisplayShowSortReady
                     // Other configurations
                     *currentState = ON_STATE;
@@ -189,10 +195,10 @@ void handleEvent_FSM(State_t *currentState, Event_t event) {
                     // Other stuff?
                     break;
                 case EVT_S2:
-                    // DisplayShowCurrentCount
+                    writeCurrentCount(10, 4, 3, 3);
                     *currentState = DISPLAY_STATE;                
                     break;
-                // case EVENT_COLOR_DETECTION -> all the doing
+                // case EVENT_COLOR_DETECTION -> all the doing writeDetectedColor(RED);
                 // case TIMER_UP -> clear display, go offline display *currentState = OFF_STATE;     
                 default:
                     break;
@@ -205,30 +211,3 @@ void handleEvent_FSM(State_t *currentState, Event_t event) {
 void idleTask() {
     return;
 }
-
-
-/**
- * @brief ISR fr Port2
- *
- * ISR wird aufgerufen, sobald an P2.3 eine fallende Flanke auftritt
- */
-#pragma vector=PORT2_VECTOR
-__interrupt void Port_2(void) {
-    eventBits |= EVT_S2;
-    P2IFG &= ~BIT3;                         // P2.3 IFG cleared
-    _bic_SR_register_on_exit(LPM3_bits);
-}
-
-
-/**
- * @brief ISR fr Port4
- *
- * ISR wird aufgerufen, sobald an P4.1 eine fallende Flanke auftritt
- */
-#pragma vector=PORT4_VECTOR
-__interrupt void Port_4(void) {
-    eventBits |= EVT_S1;
-    P4IFG &= ~BIT1;                         // P4.1 IFG cleared
-    _bic_SR_register_on_exit(LPM3_bits);
-}
-

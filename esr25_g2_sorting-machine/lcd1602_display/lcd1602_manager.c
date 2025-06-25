@@ -31,6 +31,8 @@ void writeReady(void) {
 
     lcd1602_clear();
     timer_sleep_ms(5);
+    lcd1602_backlight(true);
+    timer_sleep_ms(5);
     lcd1602_write(1, ready_text1);
     timer_sleep_ms(5);
     lcd1602_write(2, ready_text2);

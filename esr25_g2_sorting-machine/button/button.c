@@ -6,14 +6,9 @@
  */
 
 #include "button.h"
-#include "lcd1602_display/lcd1602.h"
-#include "lcd1602_display/lcd1602_manager.h"
+#include "state_machine/state_machine.h"
 
-extern lcd1602_res_t lcd1602_backlight(bool on);
-extern void writeCurrentCount(uint8_t current_count_all, uint8_t current_count_blue, 
-uint8_t current_count_green, uint8_t current_count_red);
-extern void writeReady(void); 
-extern void writeDetectedColor(COLOR color);
+extern Event_t eventBits;
 
 void button_init(void)
 {
@@ -33,29 +28,28 @@ void button_init(void)
     P2IES |= BIT3;    // Interrupt bei fallender Flanke (HIGH -> LOW)
     P2IFG &= ~BIT3;   // Interrupt-Flag löschen
     P2IE  |= BIT3;    // Interrupt aktivieren
+
+    // Disable the GPIO power-on default high-impedance mode
+    // to activate previously configured port settings
+    P2IFG &= ~BIT3;                 // P2.3 IFG cleared
+    P4IFG &= ~BIT1;                 // P4.1 IFG cleared
+
 }
 
 // --- ISR für Port 4 ---
 #pragma vector = PORT4_VECTOR
 __interrupt void Port_4_ISR(void)
 {
-    if (P4IFG & BIT1) {
-        P4IFG &= ~BIT1; // Flag löschen
-        // Button4Event();
-        lcd1602_backlight(1);
-        writeCurrentCount(12, 8, 5, 7);
-        // __bic_SR_register_on_exit(LPM3_bits); /* Exit LPM3 */
-    }
+    eventBits |= EVT_S1;
+    P4IFG &= ~BIT1;                         // P4.1 IFG cleared
+    _bic_SR_register_on_exit(LPM3_bits);
 }
 
 // --- ISR für Port 2 ---
 #pragma vector = PORT2_VECTOR
 __interrupt void Port_2_ISR(void)
 {
-    if (P2IFG & BIT3) {
-        P2IFG &= ~BIT3; // Flag löschen
-        //Button2Event();
-        //lcd1602_backlight(0);
-        writeDetectedColor(BLUE);
-    }
+    eventBits |= EVT_S2;
+    P2IFG &= ~BIT3;                         // P2.3 IFG cleared
+    _bic_SR_register_on_exit(LPM3_bits);
 }
