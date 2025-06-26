@@ -1,53 +1,119 @@
+/* ========================================================================== */
+/* PCA9685.h                                                                  */
+/* ========================================================================== */
+/**
+ * @file      PCA9685.h
+ * @author    wehrberger
+ * @date      31.05.2025
+ *
+ * @brief     PCA9685 16-Kanal PWM-Treiber für Servo- und LED-Steuerung.
+ *
+ * Dieses Modul bietet eine einfache Schnittstelle zum PCA9685 16-Kanal
+ * 12-Bit PWM-Treiber über I²C-Kommunikation. Der Treiber bietet grundlegende
+ * Funktionalität für:
+ *   - PCA9685_init()                – Initialisierung für 50 Hz PWM-Betrieb
+ *   - PCA9685_set_servo_position()  – PWM-Position für Servo-Steuerung setzen
+ *
+ * Der Treiber ist optimiert für Servo-Anwendungen mit 50 Hz PWM-Frequenz
+ * und bietet vordefinierte Konstanten für die Kippplatform.
+ *
+ * @note Dieser Treiber benötigt eine funktionsfähige I²C-Schnittstelle.
+ *       Vor Verwendung anderer Funktionen muss die init() Methode aufgerufen werden.
+ */
+
 #ifndef PCA9685_H
 #define PCA9685_H
 
 #include <stdint.h>
 
-/// Die I2C-Adresse des PCA9685-Moduls.
+/* ========================================================================== */
+/* Konstanten                                           */
+/* ========================================================================== */
+
+/** @brief I²C-Slave-Adresse des PCA9685-Moduls. */
 #define PCA9685_ADDR      0x40
 
-/// Registeradresse für LED0_ON_L.
+/* ========================================================================== */
+/* PCA9685 Registeradressen                                                   */
+/* ========================================================================== */
+
+/** @brief LED0_ON_L Register – Kanal 0 Ein-Zeit Low-Byte. */
 #define LED0_ON_L         0x06
-/// Registeradresse für LED0_ON_H.
+
+/** @brief LED0_ON_H Register – Kanal 0 Ein-Zeit High-Byte. */
 #define LED0_ON_H         0x07
-/// Registeradresse für LED0_OFF_L.
+
+/** @brief LED0_OFF_L Register – Kanal 0 Aus-Zeit Low-Byte. */
 #define LED0_OFF_L        0x08
-/// Registeradresse für LED0_OFF_H.
+
+/** @brief LED0_OFF_H Register – Kanal 0 Aus-Zeit High-Byte. */
 #define LED0_OFF_H        0x09
 
-/// Berechnet die Registeradresse für LED_ON_L eines bestimmten Kanals.
+/* ========================================================================== */
+/* Register makros                                                 */
+/* ========================================================================== */
+
+/** @brief Berechnet LED_ON_L Registeradresse für gegebenen Kanal. */
 #define LED_ON_L(channel)  (LED0_ON_L + 4 * (channel))
-/// Berechnet die Registeradresse für LED_ON_H eines bestimmten Kanals.
+
+/** @brief Berechnet LED_ON_H Registeradresse für gegebenen Kanal. */
 #define LED_ON_H(channel)  (LED0_ON_H + 4 * (channel))
-/// Berechnet die Registeradresse für LED_OFF_L eines bestimmten Kanals.
+
+/** @brief Berechnet LED_OFF_L Registeradresse für gegebenen Kanal. */
 #define LED_OFF_L(channel) (LED0_OFF_L + 4 * (channel))
-/// Berechnet die Registeradresse für LED_OFF_H eines bestimmten Kanals.
+
+/** @brief Berechnet LED_OFF_H Registeradresse für gegebenen Kanal. */
 #define LED_OFF_H(channel) (LED0_OFF_H + 4 * (channel))
 
-/// Pulsweite für 45 Grad bei einem Servo.
-#define SERVO_DEG_PULSE_45  252 // 252 * (20 ms / 4096) ≈ 1.23 ms
-/// Pulsweite für 90 Grad bei einem Servo.
-#define SERVO_DEG_PULSE_90  365 // 365 * (20 ms / 4096) ≈ 1.78 ms
-/// Pulsweite für 135 Grad bei einem Servo.
-#define SERVO_DEG_PULSE_135 477 // 477 * (20 ms / 4096) ≈ 2.33 ms
+/* ========================================================================== */
+/* Servo-Positionskonstanten                                                  */
+/* ========================================================================== */
+
+/** Konstanten sind optimiert für die Kippplatform
+
+/** @brief PWM-Wert für 40° Servo-Position  (≈ 1.20 ms Pulsweite). */
+#define SERVO_DEG_PULSE_40   240
+
+/** @brief PWM-Wert für 50° Servo-Position  (≈ 1.30 ms Pulsweite). */
+#define SERVO_DEG_PULSE_50   265
+
+/** @brief PWM-Wert für 60° Servo-Position  (≈ 1.41 ms Pulsweite). */
+#define SERVO_DEG_PULSE_60   290
+
+/** @brief PWM-Wert für 90° Servo-Position  (≈ 1.78 ms Pulsweite). */
+#define SERVO_DEG_PULSE_90   365
+
+/** @brief PWM-Wert für 120° Servo-Position (≈ 2.15 ms Pulsweite). */
+#define SERVO_DEG_PULSE_120  440
+
+/** @brief PWM-Wert für 135° Servo-Position (≈ 2.33 ms Pulsweite). */
+#define SERVO_DEG_PULSE_135  477
 
 /**
- * @brief Initialisiert den PCA9685 für 50 Hz PWM.
- * 
- * Diese Funktion setzt den PRESCALE-Wert und den MODE1-Registerwert, um
- * den PCA9685 in den gewünschten Betriebsmodus zu versetzen.
+ * @brief Initialisiert den PCA9685 für 50 Hz PWM-Betrieb.
+ *
+ * Konfiguriert den PCA9685 mit folgenden Einstellungen:
+ *   - PWM-Frequenz: 50 Hz (geeignet für Standard-Servos)
+ *   - PRESCALE: 121 (0x79) für 25 MHz Oszillator
+ *   - Auto-Increment und ALLCALL aktiviert
+ *
+ * @note Der PCA9685 wird kurzzeitig in den SLEEP-Modus versetzt,
+ *       um den PRESCALE-Wert zu setzen.
  */
 void PCA9685_init(void);
 
 /**
  * @brief Setzt die PWM-Position eines bestimmten Kanals.
- * 
- * @param channel Der Kanal, der eingestellt werden soll (0 bis 15).
- * @param position Die 12-Bit-Position (0 bis 4095), die die Pulsweite definiert.
- * 
- * @note Die PWM startet immer bei 0 (LED_ON wird auf 0 gesetzt), 
- *       und die Position definiert den Zeitpunkt, an dem das Signal endet (LED_OFF).
+ *
+ * Konfiguriert die PWM-Ausgabe für einen spezifischen Kanal.
+ * Das PWM-Signal startet immer bei 0 (LED_ON = 0) und endet
+ * bei der angegebenen Position (LED_OFF = position).
+ *
+ * @param[in] channel Kanal-Nummer (0-15). Werte außerhalb dieses
+ *                    Bereichs werden ignoriert.
+ * @param[in] position 12-Bit PWM-Position (0-4095). Bestimmt die
+ *                     Pulsweite des PWM-Signals.
  */
 void PCA9685_set_servo_position(uint8_t channel, uint16_t position);
 
-#endif
+#endif /* PCA9685_H */

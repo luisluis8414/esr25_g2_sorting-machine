@@ -36,9 +36,6 @@ void init() {
     __bis_SR_register(GIE); // Global interrupt enable
 }
 
-/**
- * main.c
- */
 int main(void)
 {
     State_t currentState = OFF_STATE;
@@ -66,10 +63,20 @@ int main(void)
     timer_sleep_ms(2000);
 
     plattform_default_position();
+    while (1)
+    {
+        if (flag_calib) {                    
+            flag_calib = 0;
+            calibrate_clear();               
+            continue;                       
+        }
 
-    timer_sleep_ms(2000);
+        uint16_t clear;
+        TCS_read_clear(&clear);
 
-    plattform_empty_g();
+        if (clear + MIN_DELTA_CLR < clear_ref) {
+            do_sort();
+        }
 
     timer_sleep_ms(2000);
 
