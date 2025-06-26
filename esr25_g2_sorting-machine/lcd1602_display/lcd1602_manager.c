@@ -9,7 +9,6 @@
 #include "lcd1602.h"
 #include "lcd1602_manager.h"
 #include <stdbool.h>
-#include <driverlib.h>
 #include "timer/timer.h"
 #include "I2C/I2C.h"
 

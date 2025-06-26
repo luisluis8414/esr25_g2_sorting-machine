@@ -7,10 +7,9 @@
 
 #include "lcd1602.h"
 #include <stdbool.h>
-#include <driverlib.h>
 #include "timer/timer.h"
 #include "I2C/I2C.h"
-
+    
 
 #define RS 0x01
 #define RW 0x02
@@ -152,8 +151,9 @@ lcd1602_res_t lcd1602_backlight(bool on) {
         backlight_state = BACKLIGHT_OFF;
     }
 
-    EUSCI_B_I2C_masterSendSingleByte(EUSCI_B0_BASE, backlight_state);
-    while (EUSCI_B_I2C_isBusBusy(EUSCI_B0_BASE));
+    char data[1] = {backlight_state};
+    I2C_write(SLAVE_ADDRESS_LCD, data, 1); 
+
     timer_sleep_ms(1);
     return eLCD1602_ok;
 }
@@ -166,16 +166,19 @@ bool lcd1602_getBacklightState(void) {
 
 void write8BitI2CtoDisplay(uint8_t data) {
     data = data|backlight_state;        
-    EUSCI_B_I2C_masterSendSingleByte(EUSCI_B0_BASE, data);
-    while (EUSCI_B_I2C_isBusBusy(EUSCI_B0_BASE));
+    
+    char buf[1];
+
+    buf[0] = data;
+    I2C_write(SLAVE_ADDRESS_LCD, buf, 1);
     timer_sleep_ms(1);
 
-    EUSCI_B_I2C_masterSendSingleByte(EUSCI_B0_BASE, data|EN);
-    while (EUSCI_B_I2C_isBusBusy(EUSCI_B0_BASE));
+    buf[0] = data | EN;
+    I2C_write(SLAVE_ADDRESS_LCD, buf, 1);
     timer_sleep_ms(1);
 
-    EUSCI_B_I2C_masterSendSingleByte(EUSCI_B0_BASE, data);
-    while (EUSCI_B_I2C_isBusBusy(EUSCI_B0_BASE));
+    buf[0] = data;
+    I2C_write(SLAVE_ADDRESS_LCD, buf, 1);
     timer_sleep_ms(1);
 }
 

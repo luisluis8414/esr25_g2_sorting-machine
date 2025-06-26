@@ -100,6 +100,15 @@
                             </tool>
                         </toolChain>
                     </folderInfo>
+                    <fileInfo id="com.ti.ccstudio.buildDefinitions.MSP430.Debug.535698725.main.c" name="main.c" rcbsApplicability="disable" resourcePath="main.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.MSP430_21.6.exe.compilerDebug.1789663312.656824990">
+                        <tool id="com.ti.ccstudio.buildDefinitions.MSP430_21.6.exe.compilerDebug.1789663312.656824990" name="MSP430 Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP430_21.6.exe.compilerDebug.1789663312">
+                            <option id="com.ti.ccstudio.buildDefinitions.MSP430_21.6.compilerID.INCLUDE_PATH.1944596252" superClass="com.ti.ccstudio.buildDefinitions.MSP430_21.6.compilerID.INCLUDE_PATH" valueType="includePath">
+                                <listOptionValue value="${CCS_BASE_ROOT}/msp430/include"/>
+                                <listOptionValue value="${PROJECT_ROOT}"/>
+                                <listOptionValue value="${CG_TOOL_ROOT}/include"/>
+                            </option>
+                        </tool>
+                    </fileInfo>
                 </configuration>
             </storageModule>
             <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
