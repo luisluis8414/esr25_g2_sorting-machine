@@ -14,12 +14,12 @@
 #include "I2C/I2C.h"
 #include "PCA9685.h"
 
-void PCA9685_init() 
+void PCA9685_init()
 {
     // PRESCALE-Wert für 50 Hz PWM setzen
     // Berechnung: round(25,000,000/(4096 × 50)) - 1 = 121 (0x79)
     // Referenz: https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf Seite 25
-    char PRESCALE_DATA[] = {0xFE, 0x79}; 
+    char PRESCALE_DATA[] = {0xFE, 0x79};
     I2C_write(PCA9685_ADDR, PRESCALE_DATA, 2);
 
     // MODE1 Register konfigurieren: Auto-Increment + ALLCALL aktivieren
@@ -27,9 +27,10 @@ void PCA9685_init()
     I2C_write(PCA9685_ADDR, MODE1_AI_ALLCALL_DATA, 2);
 }
 
-void PCA9685_set_servo_position(uint8_t channel, uint16_t position) 
+void PCA9685_set_servo_position(uint8_t channel, uint16_t position)
 {
-    if(channel > 15){
+    if (channel > 15)
+    {
         return;
     }
 
