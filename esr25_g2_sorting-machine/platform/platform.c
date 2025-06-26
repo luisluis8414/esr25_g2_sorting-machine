@@ -37,6 +37,7 @@ void plattform_empty(void)
     
     // Zurück zur Standardposition
     plattform_default_position();
+    timer_sleep_ms(500);
 }
 
 void plattform_empty_r(void) 
