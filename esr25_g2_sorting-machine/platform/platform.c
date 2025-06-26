@@ -19,7 +19,7 @@ void plattform_default_position(void)
     PCA9685_set_servo_position(0, SERVO_DEG_PULSE_90);  // Richtungsservo
     PCA9685_set_servo_position(4, SERVO_DEG_PULSE_90);  // Kippservo
 
-    timer_sleep_ms(500);
+    timer_sleep_ms(700);
 }
 
 void plattform_sleep_position(void) 

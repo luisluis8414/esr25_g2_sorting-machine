@@ -6,6 +6,7 @@
 #include "I2C/I2C.h"
 #include "timer/timer.h"
 #include "TCS34725/TCS34725.h"
+#include "lcd1602_display/lcd1602_manager.h"
 
 /* ========================================================================== */
 /* State Machine Definitions                                                  */
@@ -32,6 +33,12 @@ Event_t eventBits = EVT_NO_EVENT;
 volatile uint16_t clear_ref = 0;     // Default-Schwelle beim Start
 volatile uint16_t MIN_DELTA_CLR = 0; // wie viel dunkler es mindestens sein muss
 
+// Sorting statistics
+static uint8_t total_sorted = 0;
+static uint8_t red_sorted = 0;
+static uint8_t green_sorted = 0;
+static uint8_t blue_sorted = 0;
+
 void idleTask()
 {
     // Optional: Add any idle processing here
@@ -47,7 +54,7 @@ static void calibrate_clear(void)
     uint16_t c;
     TCS_read_clear(&c); // LED aus – Umgebungslicht-Referenz
     clear_ref = c;
-    MIN_DELTA_CLR = c * 0.5f;
+    MIN_DELTA_CLR = c * 0.2f;
 }
 
 void check_for_objects(void)
@@ -68,16 +75,26 @@ void do_sort(void)
 
     if (r > g && r > b)
     {
+        writeDetectedColor(RED);
         plattform_empty_r(); // Red is dominant
+        red_sorted++;
+        total_sorted++;
     }
     else if (g > b)
     {
+        writeDetectedColor(GREEN);
         plattform_empty_g(); // Green is dominant
+        green_sorted++;
+        total_sorted++;
     }
     else
     {
+        writeDetectedColor(BLUE);
         plattform_empty_b(); // Blue is dominant
+        blue_sorted++;
+        total_sorted++;
     }
+    writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
 }
 
 /* ========================================================================== */
@@ -95,8 +112,7 @@ void init(void)
     timer_systick_init(1000);
 
     plattform_sleep_position();
-
-    calibrate_clear();
+    clearDisplayAndBacklightOff();
 
     // --- Button P2.3 setup with interrupt ---
     P2DIR &= ~BIT3; // input
@@ -155,6 +171,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             plattform_default_position();
             calibrate_clear();
             timer_systick_start();
+            writeReady();
             *currentState = ON_STATE;
             break;
         case EVT_OBJECT_DETECTED:
@@ -178,6 +195,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             // Button press turns machine OFF
             timer_systick_stop();
             plattform_sleep_position();
+            clearDisplayAndBacklightOff();
             *currentState = OFF_STATE;
             break;
         case EVT_OBJECT_DETECTED:
