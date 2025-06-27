@@ -1,105 +1,17 @@
 #include <msp430.h>
-#include "PCA9685/PCA9685.h"
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "PCA9685/PCA9685.h"
+#include "button/button.h"
 #include "platform/platform.h"
 #include "I2C/I2C.h"
 #include "timer/timer.h"
 #include "TCS34725/TCS34725.h"
 #include "lcd1602_display/lcd1602_manager.h"
+#include "state_machine/state_machine.h"
 
-/* ========================================================================== */
-/* State Machine Definitions                                                  */
-/* ========================================================================== */
-
-typedef enum
-{
-    OFF_STATE,
-    ON_STATE
-} State_t;
-
-#define EVT_NO_EVENT 0x00
-#define EVT_SYSTEM_TICK BIT0
-#define EVT_BUTTON_PRESS BIT1
-#define EVT_OBJECT_DETECTED BIT2
-
-typedef uint16_t Event_t;
-Event_t eventBits = EVT_NO_EVENT;
-
-/* ========================================================================== */
-/* Global Variables                                                           */
-/* ========================================================================== */
-
-volatile uint16_t clear_ref = 0;     // Default-Schwelle beim Start
-volatile uint16_t MIN_DELTA_CLR = 0; // wie viel dunkler es mindestens sein muss
-
-// Sorting statistics
-static uint8_t total_sorted = 0;
-static uint8_t red_sorted = 0;
-static uint8_t green_sorted = 0;
-static uint8_t blue_sorted = 0;
-
-void idleTask()
-{
-    // Optional: Add any idle processing here
-    return;
-}
-
-/* ========================================================================== */
-/* Application Functions                                                      */
-/* ========================================================================== */
-
-static void calibrate_clear(void)
-{
-    uint16_t c;
-    TCS_read_clear(&c); // LED aus – Umgebungslicht-Referenz
-    clear_ref = c;
-    MIN_DELTA_CLR = c * 0.2f;
-}
-
-void check_for_objects(void)
-{
-    uint16_t clear;
-    TCS_read_clear(&clear);
-
-    if (clear + MIN_DELTA_CLR < clear_ref)
-    {
-        eventBits |= EVT_OBJECT_DETECTED;
-    }
-}
-
-void do_sort(void)
-{
-    uint8_t r, g, b;
-    TCS_get_rgb(&r, &g, &b);
-
-    if (r > g && r > b)
-    {
-        writeDetectedColor(RED);
-        plattform_empty_r(); // Red is dominant
-        red_sorted++;
-        total_sorted++;
-    }
-    else if (g > b)
-    {
-        writeDetectedColor(GREEN);
-        plattform_empty_g(); // Green is dominant
-        green_sorted++;
-        total_sorted++;
-    }
-    else
-    {
-        writeDetectedColor(BLUE);
-        plattform_empty_b(); // Blue is dominant
-        blue_sorted++;
-        total_sorted++;
-    }
-    writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
-}
-
-/* ========================================================================== */
-/* Initialization                                                             */
-/* ========================================================================== */
+Event_t eventBits = 0;
 
 void init(void)
 {
@@ -107,114 +19,15 @@ void init(void)
     PCA9685_init();
     timer_init();
     TCS_init();
+    button_init();
 
-    // Initialize system tick for 1000ms period
     timer_systick_init(1000);
 
     plattform_sleep_position();
     clearDisplayAndBacklightOff();
 
-    // --- Button P2.3 setup with interrupt ---
-    P2DIR &= ~BIT3; // input
-    P2REN |= BIT3;  // enable pull-up/down
-    P2OUT |= BIT3;  // pull-up
-
-    P2IES |= BIT3;  // falling edge (press)
-    P2IFG &= ~BIT3; // clear flag
-    P2IE |= BIT3;   // enable interrupt
+    __enable_interrupt();
 }
-
-/* ========================================================================== */
-/* Event Handling Functions                                                   */
-/* ========================================================================== */
-
-Event_t getEvent(Event_t *event)
-{
-    uint16_t ii = 8;
-    Event_t bitMask = 0x0080;
-
-    if (*event != 0)
-    {
-        while (ii > 0)
-        {
-            if ((bitMask & *event) > 0)
-            {
-                *event &= ~bitMask;
-                return (bitMask);
-            }
-            else
-            {
-                bitMask >>= 1;
-            }
-            ii--;
-        }
-    }
-    return 0;
-}
-
-void handleEvent_FSM(State_t *currentState, Event_t event)
-{
-    State_t state = *currentState;
-
-    switch (state)
-    {
-    case OFF_STATE:
-        switch (event)
-        {
-        case EVT_NO_EVENT:
-            break;
-        case EVT_SYSTEM_TICK:
-            // No reaction on system tick in OFF state
-            break;
-        case EVT_BUTTON_PRESS:
-            // Button press turns machine ON
-            plattform_default_position();
-            calibrate_clear();
-            timer_systick_start();
-            writeReady();
-            *currentState = ON_STATE;
-            break;
-        case EVT_OBJECT_DETECTED:
-            // No reaction to objects in OFF state
-            break;
-        default:
-            break;
-        }
-        break;
-
-    case ON_STATE:
-        switch (event)
-        {
-        case EVT_NO_EVENT:
-            break;
-        case EVT_SYSTEM_TICK:
-            // Check for objects periodically
-            check_for_objects();
-            break;
-        case EVT_BUTTON_PRESS:
-            // Button press turns machine OFF
-            timer_systick_stop();
-            plattform_sleep_position();
-            clearDisplayAndBacklightOff();
-            *currentState = OFF_STATE;
-            break;
-        case EVT_OBJECT_DETECTED:
-            // Sort the detected object
-            do_sort();
-            break;
-        default:
-            break;
-        }
-        break;
-
-    default:
-        break;
-    }
-}
-
-/* ========================================================================== */
-/* Main Function                                                              */
-/* ========================================================================== */
 
 int main(void)
 {
@@ -226,8 +39,6 @@ int main(void)
 
     init();
 
-    __enable_interrupt();
-
     while (true)
     {
         event = getEvent(&eventBits);
@@ -238,21 +49,11 @@ int main(void)
                 handleEvent_FSM(&currentState, event);
                 event = getEvent(&eventBits);
             }
-            idleTask();
         }
         LPM3;
     }
 }
 
-/* ========================================================================== */
-/* Interrupt Service Routines                                                 */
-/* ========================================================================== */
-
-/**
- * @brief Timer_B0 Overflow/CCR1-CCR6 Interrupt Service Routine.
- *
- * Behandelt System-Tick Overflow Interrupts.
- */
 #pragma vector = TIMER0_B1_VECTOR
 __interrupt void TIMER0_B1_ISR(void)
 {
