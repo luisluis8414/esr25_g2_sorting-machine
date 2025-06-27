@@ -12,6 +12,7 @@
 #include "I2C.h"
 #include "msp430fr2355.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 /** Pointer auf das aktuell zu übertragende Byte. */
 static char *packet;
@@ -24,6 +25,8 @@ static unsigned int packet_length;
 
 /** Speicher für das zuletzt vom ISR empfangene Byte. */
 static char data_in;
+
+static volatile bool i2c_done = false;
 
 void I2C_init(void)
 {
@@ -49,9 +52,6 @@ void I2C_init(void)
 
     // Interrupts: RX, TX, STOP, NACK
     UCB0IE |= UCRXIE0 | UCTXIE0 | UCSTPIE | UCNACKIE;
-
-    // Globale Interrupt-Freigabe (Treiber ist interrupt-gesteuert)
-    __bis_SR_register(GIE);
 }
 
 void I2C_write(uint8_t slave_addr, char data[], uint8_t length)
@@ -67,7 +67,11 @@ void I2C_write(uint8_t slave_addr, char data[], uint8_t length)
 
     // START generieren, dann schlafen bis STOP
     UCB0CTLW0 |= UCTXSTT;
-    LPM0;
+    
+    i2c_done      = false;
+    while (!i2c_done){
+       LPM3; // Warten auf STOP → ISR weckt uns auf
+    }
 }
 
 char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr)
@@ -81,7 +85,11 @@ char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr)
     UCB0TBCNT = 1;
 
     UCB0CTLW0 |= UCTXSTT; // Repeated START
-    LPM0;                 // Warten auf STOP → ISR weckt uns auf
+        
+    i2c_done      = false;
+    while (!i2c_done){
+       LPM3;  // Warten auf STOP → ISR weckt uns auf
+    }           
 
     return data_in;
 }
@@ -95,7 +103,7 @@ char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr)
  *
  * Nur vier Interrupt-Ursachen werden derzeit behandelt:
  *   - UCNACKIFG : Kennzeichnet fehlendes ACK (nur Debug-Hook)
- *   - UCSTPIFG  : STOP erkannt → LPM0 verlassen
+ *   - UCSTPIFG  : STOP erkannt → LPM3 verlassen
  *   - UCRXIFG0  : Ein Byte empfangen
  *   - UCTXIFG0  : Sendepuffer bereit für nächstes Byte
  *
@@ -106,13 +114,15 @@ __interrupt void EUSCI_B0_I2C_ISR(void)
 {
     switch (__even_in_range(UCB0IV, USCI_I2C_UCBIT9IFG)) {
         case USCI_I2C_UCNACKIFG:
-            // Derzeit nur für Debug
+            i2c_done = true;
+            __bic_SR_register_on_exit(LPM3_bits);
             __no_operation();
             break;
 
         case USCI_I2C_UCSTPIFG:
-            // STOP → CPU aufwecken (LPM0 verlassen)
-            __bic_SR_register_on_exit(LPM0_bits);
+            // STOP → CPU aufwecken (LPM3 verlassen)
+            i2c_done = true;
+            __bic_SR_register_on_exit(LPM3_bits);
             break;
 
         case USCI_I2C_UCRXIFG0:
