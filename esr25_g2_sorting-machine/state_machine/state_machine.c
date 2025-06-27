@@ -95,9 +95,14 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             *currentState = DISPLAY_STATE;
             break;
         case EVT_S2:
+            lcd1602_backlight(true);
+            lcd1602_write(0, "Sort-modus");
+            lcd1602_write(1, "S1: auto, S2: man");
             *currentState = MODE_SELECTION_STATE;
             break;
         case EVT_SYSTEM_TICK:
+            timer_systick_stop();
+            break;
         case EVT_OBJECT_DETECTED:
             break;
         }
@@ -113,6 +118,8 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         case EVT_S2:
             break;
         case EVT_SYSTEM_TICK:
+            timer_systick_stop();
+            break;
         case EVT_OBJECT_DETECTED:
             break;
         }
@@ -122,20 +129,18 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         switch (event)
         {
         case EVT_S1:
-            lcd1602_backlight(true);
             lcd1602_clear();
-            lcd1602_write(0, "Auto-Sort aktiv");
             plattform_default_position();
+            lcd1602_write(1, "Auto-Sort aktiv");
             timer_systick_start();
-            writeReady();
             calibrate_clear();
             *currentState = AUTO_SORT_STATE;
             break;
 
         case EVT_S2:
-            lcd1602_backlight(true);
             lcd1602_clear();
-            lcd1602_write(0, "Manueller Modus");
+            plattform_default_position();
+            lcd1602_write(1, "Manueller Modus");
             calibrate_clear();
             *currentState = MANUAL_SORT_STATE;
             break;
@@ -170,6 +175,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         switch (event)
         {
         case EVT_S1:
+            check_for_objects();
             break;
         case EVT_S2:
             plattform_sleep_position();
@@ -177,6 +183,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             *currentState = OFF_STATE;
             break;
         case EVT_SYSTEM_TICK:
+            timer_systick_stop();
             break;
         case EVT_OBJECT_DETECTED:
             do_sort();
