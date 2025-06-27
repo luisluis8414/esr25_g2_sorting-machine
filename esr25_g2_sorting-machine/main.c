@@ -68,12 +68,9 @@ __interrupt void TIMER0_B1_ISR(void)
     case TB0IV_TBIFG:
         eventBits |= EVT_SYSTEM_TICK;
         guiSysTickCnt++;
-        if (!TIMER_SLEEP_MODE)
-        {
-            __bic_SR_register_on_exit(LPM3_bits);
-        }
         break;
     default:
         break;
     }
+    __bic_SR_register_on_exit(LPM3_bits);
 }

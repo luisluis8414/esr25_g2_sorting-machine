@@ -4,6 +4,7 @@
 uint16_t guiSysTickCnt = 0;
 static uint16_t muiSysTickPer_ms = 1000;
 static uint16_t muiUpCnt = 0x7FFF;
+static volatile bool timer1_done = false;
 
 void timer_init(void)
 {
@@ -30,13 +31,19 @@ void timer_sleep_ms(uint16_t sleep_ms)
     if (timer_count == 0)
         timer_count = 1;
 
-    TIMER_SLEEP_MODE = true;
+
     TB1CCR0 = timer_count; // Timer_B1 verwenden
     TB1CTL |= MC__UP;      // Timer_B1 starten
-    LPM3;                  // Schlafen bis CCR0 ISR
+
+    timer1_done = false;
+
+     while (!timer1_done)
+     {
+        LPM3;                  // Schlafen bis CCR0 ISR
+     }
+    
     TB1CTL &= ~MC__UP;     // Timer_B1 stoppen
     TB1CTL |= MC__STOP;
-    TIMER_SLEEP_MODE = false;
 }
 
 void timer_systick_init(uint32_t period_ms)
@@ -80,6 +87,7 @@ void timer_systick_sleep(uint32_t sleep_ms)
  */
 #pragma vector = TIMER1_B0_VECTOR
 __interrupt void TIMER1_B0_ISR(void)
-{
+{   
+    timer1_done = true;
     __bic_SR_register_on_exit(LPM3_bits); // LPM3 verlassen
 }

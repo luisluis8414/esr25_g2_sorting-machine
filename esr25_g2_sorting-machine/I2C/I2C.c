@@ -68,9 +68,9 @@ void I2C_write(uint8_t slave_addr, char data[], uint8_t length)
     // START generieren, dann schlafen bis STOP
     UCB0CTLW0 |= UCTXSTT;
     
-    i2c_done      = false;
+    i2c_done = false;
     while (!i2c_done){
-       LPM3; // Warten auf STOP → ISR weckt uns auf
+        __bis_SR_register(LPM3_bits | GIE); // Warten auf STOP → ISR weckt uns auf
     }
 }
 
@@ -86,9 +86,9 @@ char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr)
 
     UCB0CTLW0 |= UCTXSTT; // Repeated START
         
-    i2c_done      = false;
+    i2c_done = false;
     while (!i2c_done){
-       LPM3;  // Warten auf STOP → ISR weckt uns auf
+        __bis_SR_register(LPM3_bits | GIE);  // Warten auf STOP → ISR weckt uns auf
     }           
 
     return data_in;
@@ -114,6 +114,7 @@ __interrupt void EUSCI_B0_I2C_ISR(void)
 {
     switch (__even_in_range(UCB0IV, USCI_I2C_UCBIT9IFG)) {
         case USCI_I2C_UCNACKIFG:
+            // Derzeit nur für Debug
             i2c_done = true;
             __bic_SR_register_on_exit(LPM3_bits);
             __no_operation();
