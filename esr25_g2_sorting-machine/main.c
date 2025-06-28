@@ -8,6 +8,7 @@
 #include "I2C/I2C.h"
 #include "timer/timer.h"
 #include "TCS34725/TCS34725.h"
+#include "lcd1602_display/lcd1602.h"
 #include "lcd1602_display/lcd1602_manager.h"
 #include "state_machine/state_machine.h"
 
@@ -36,6 +37,7 @@ void init(void)
     timer_init();
     TCS_init();
     button_init();
+    lcd1602_init();
 
 
     timer_systick_init(1000);

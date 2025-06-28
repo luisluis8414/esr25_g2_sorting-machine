@@ -42,20 +42,20 @@ void do_sort(void)
 
     if (r > g && r > b)
     {
-        writeDetectedColor(RED);
         plattform_empty_r();
+        writeDetectedColor(RED);
         red_sorted++;
     }
     else if (g > b)
     {
-        writeDetectedColor(GREEN);
         plattform_empty_g();
+        writeDetectedColor(GREEN);
         green_sorted++;
     }
     else
     {
-        writeDetectedColor(BLUE);
         plattform_empty_b();
+        writeDetectedColor(BLUE);
         blue_sorted++;
     }
     total_sorted++;
