@@ -21,6 +21,7 @@ void writeReady(void);
 void writeCurrentCount(uint8_t current_count_all, uint8_t current_count_blue, 
 uint8_t current_count_green, uint8_t current_count_red);
 void writeDetectedColor(COLOR color);
-void clearDisplayAndBacklightOff(void);
+void turnDisplayOn(void);
+void turnDisplayOff(void);
 
 #endif /* LCD1602_MANAGER_H_ */

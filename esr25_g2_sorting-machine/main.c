@@ -41,7 +41,7 @@ void init(void)
     timer_systick_init(1000);
 
     plattform_sleep_position();
-    clearDisplayAndBacklightOff();
+    turnDisplayOff();
 
     __enable_interrupt();
 }

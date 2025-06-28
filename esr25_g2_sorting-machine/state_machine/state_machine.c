@@ -11,10 +11,10 @@
 volatile uint16_t clear_ref = 0;
 volatile uint16_t MIN_DELTA_CLR = 0;
 
-uint8_t total_sorted = 0;
-uint8_t red_sorted = 0;
-uint8_t green_sorted = 0;
-uint8_t blue_sorted = 0;
+    uint8_t total_sorted = 0;
+    uint8_t red_sorted = 0;
+    uint8_t green_sorted = 0;
+    uint8_t blue_sorted = 0;
 
 void calibrate_clear(void)
 {
@@ -90,12 +90,12 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         switch (event)
         {
         case EVT_S1:
-            lcd1602_backlight(true);
+            turnDisplayOn();
             writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
             *currentState = DISPLAY_STATE;
             break;
         case EVT_S2:
-            lcd1602_backlight(true);
+            turnDisplayOn();
             lcd1602_write(0, "Sort-modus");
             lcd1602_write(1, "S1: auto, S2: man");
             *currentState = MODE_SELECTION_STATE;
@@ -112,10 +112,16 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         switch (event)
         {
         case EVT_S1:
-            clearDisplayAndBacklightOff();
+            turnDisplayOff();
             *currentState = OFF_STATE;
             break;
         case EVT_S2:
+            total_sorted = 0;
+            red_sorted = 0;
+            green_sorted = 0;
+            blue_sorted = 0;
+            
+            writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
             break;
         case EVT_SYSTEM_TICK:
             timer_systick_stop();
@@ -159,7 +165,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         case EVT_S2:
             timer_systick_stop();
             plattform_sleep_position();
-            clearDisplayAndBacklightOff();
+            turnDisplayOff();
             *currentState = OFF_STATE;
             break;
         case EVT_SYSTEM_TICK:
@@ -179,7 +185,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             break;
         case EVT_S2:
             plattform_sleep_position();
-            clearDisplayAndBacklightOff();
+            turnDisplayOff();
             *currentState = OFF_STATE;
             break;
         case EVT_SYSTEM_TICK:
