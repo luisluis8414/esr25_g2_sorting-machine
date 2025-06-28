@@ -69,7 +69,7 @@
 /* Servo-Positionskonstanten                                                  */
 /* ========================================================================== */
 
-/** Konstanten sind optimiert für die Kippplatform
+/** Konstanten sind optimiert für die Kippplattform */
 
 /** @brief PWM-Wert für 40° Servo-Position  (≈ 1.20 ms Pulsweite). */
 #define SERVO_DEG_PULSE_40   240

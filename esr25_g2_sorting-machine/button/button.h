@@ -11,8 +11,6 @@
 #include <msp430.h>
 #include <stdint.h>
 
-// Event type definition 
-typedef uint16_t Event_t;
 
 // Button-Pins definieren
 #define BUTTON1_PORT P4IN
