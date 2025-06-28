@@ -7,49 +7,85 @@
 
 #include "button.h"
 #include "../state_machine/state_machine.h"
+#include <msp430fr2355.h>
+#include <stdbool.h>
 
 extern Event_t eventBits;
+
+static volatile bool debounce_active = false;
 
 void button_init(void)
 {
     // --- P4.1 (Button1) konfigurieren ---
-    P4DIR &= ~BIT1;   // Pin als Eingang
-    P4OUT |= BIT1;    // Pull-Up aktivieren
-    P4REN |= BIT1;    // Pull-Widerstand aktivieren
+    P4DIR &= ~BIT1;
+    P4OUT |= BIT1;
+    P4REN |= BIT1;
+    P4IES |= BIT1;
+    P4IFG &= ~BIT1;
+    P4IE  |= BIT1;
 
-    P4IES |= BIT1;    // Interrupt bei fallender Flanke (HIGH -> LOW)
-    P4IFG &= ~BIT1;   // Interrupt-Flag löschen
-    P4IE  |= BIT1;    // Interrupt aktivieren
-        // --- P4.1 (Button1) konfigurieren ---
-    P2DIR &= ~BIT3;   // Pin als Eingang
-    P2OUT |= BIT3;    // Pull-Up aktivieren
-    P2REN |= BIT3;    // Pull-Widerstand aktivieren
+    // --- P2.3 (Button2) konfigurieren ---
+    P2DIR &= ~BIT3;
+    P2OUT |= BIT3;
+    P2REN |= BIT3;
+    P2IES |= BIT3;
+    P2IFG &= ~BIT3;
+    P2IE  |= BIT3;
 
-    P2IES |= BIT3;    // Interrupt bei fallender Flanke (HIGH -> LOW)
-    P2IFG &= ~BIT3;   // Interrupt-Flag löschen
-    P2IE  |= BIT3;    // Interrupt aktivieren
-
-    // Disable the GPIO power-on default high-impedance mode
-    // to activate previously configured port settings
-    P2IFG &= ~BIT3;                 // P2.3 IFG cleared
-    P4IFG &= ~BIT1;                 // P4.1 IFG cleared
-
+    // Timer_B2 vorbereiten (für ACLK-Takt)
+    TB2CTL = TBSSEL__ACLK | MC__STOP | TBCLR;
+    TB2CCTL0 = 0;
 }
 
-// --- ISR für Port 4 ---
+inline void button_debounce_start(void)
+{
+    if (debounce_active) return;
+
+    debounce_active = true;
+
+    TB2CCR0 = 16384 - 1;                    // 500 ms
+    TB2CCTL0 = CCIE;                        // Interrupt aktivieren
+    TB2CTL = TBSSEL__ACLK | MC__UP | TBCLR; // ACLK, Up mode, clear
+
+    P4IE &= ~BIT1;
+    P2IE &= ~BIT3;
+}
+
+// ISR für Port 4
 #pragma vector = PORT4_VECTOR
 __interrupt void Port_4_ISR(void)
 {
-    eventBits |= EVT_S1;
-    P4IFG &= ~BIT1;                         // P4.1 IFG cleared
-    _bic_SR_register_on_exit(LPM3_bits);
+    if (!debounce_active) {
+        eventBits |= EVT_S1;
+        button_debounce_start();
+        _bic_SR_register_on_exit(LPM3_bits);
+    }
+        P4IFG &= ~BIT1;
 }
 
-// --- ISR für Port 2 ---
+// ISR für Port 2
 #pragma vector = PORT2_VECTOR
 __interrupt void Port_2_ISR(void)
 {
-    eventBits |= EVT_S2;
-    P2IFG &= ~BIT3;                         // P2.3 IFG cleared
-    _bic_SR_register_on_exit(LPM3_bits);
+    if (!debounce_active) {
+        eventBits |= EVT_S2;
+        button_debounce_start();
+        _bic_SR_register_on_exit(LPM3_bits);
+    }
+        P2IFG &= ~BIT3;
+}
+
+// ISR für Timer_B2 CCR0
+#pragma vector = TIMER2_B0_VECTOR
+__interrupt void TimerB2_ISR(void)
+{
+    TB2CTL = MC__STOP;
+    TB2CCTL0 &= ~CCIE;
+
+    debounce_active = false;
+
+    P4IFG &= ~BIT1;
+    P4IE  |= BIT1;
+    P2IFG &= ~BIT3;
+    P2IE  |= BIT3;
 }

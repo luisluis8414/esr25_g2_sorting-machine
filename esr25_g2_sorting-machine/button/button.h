@@ -11,7 +11,7 @@
 #include <msp430.h>
 #include <stdint.h>
 
-// Event type definition (previously in state_machine.h)
+// Event type definition 
 typedef uint16_t Event_t;
 
 // Button-Pins definieren
@@ -21,5 +21,6 @@ typedef uint16_t Event_t;
 #define BUTTON2_PIN BIT1 // P2.1
 
 void button_init(void);
+inline void button_debounce_start(void);
 
 #endif /* BUTTON_H_ */
