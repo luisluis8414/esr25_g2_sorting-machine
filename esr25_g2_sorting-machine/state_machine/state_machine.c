@@ -21,7 +21,7 @@ void calibrate_clear(void)
     uint16_t c;
     TCS_read_clear(&c);
     clear_ref = c;
-    MIN_DELTA_CLR = c * 0.2f;
+    MIN_DELTA_CLR = (c * 2) / 10;  
 }
 
 void check_for_objects()

@@ -13,13 +13,30 @@
 
 Event_t eventBits = 0;
 
+void init_all_ports(void)
+{
+    P1OUT = 0x00; P1DIR = 0xFF;
+    P2OUT = 0x00; P2DIR = 0xFF;
+    P3OUT = 0x00; P3DIR = 0xFF;
+    P4OUT = 0x00; P4DIR = 0xFF;
+    P5OUT = 0x00; P5DIR = 0xFF;
+    P6OUT = 0x00; P6DIR = 0xFF;
+
+    PAOUT = 0x00; PADIR = 0xFF;
+    PBOUT = 0x00; PBDIR = 0xFF;
+    PCOUT = 0x00; PCDIR = 0xFF;
+}
+
 void init(void)
 {
+    init_all_ports();
+
     I2C_init();
     PCA9685_init();
     timer_init();
     TCS_init();
     button_init();
+
 
     timer_systick_init(1000);
 
