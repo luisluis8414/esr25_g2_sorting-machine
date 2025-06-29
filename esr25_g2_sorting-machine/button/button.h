@@ -1,8 +1,15 @@
-/*
- * button.h
+/* ========================================================================== */
+/* button.h                                                                      */
+/* ========================================================================== */
+/**
+ * @file      button.h
+ * @author    raachl
+ * @date      22.06.2025
  *
- *  Created on: 22.06.2025
- *      Author: raachl
+ * @brief     Button Handling für die Sortieranlage.
+ *
+ * Dieses Modul stellt die Funktionalität für die zwei Buttons der Sortieranlage
+ * bereit. Es implementiert Debouncing und Event Generierung für die State Machine.
  */
 
 #ifndef BUTTON_H_
@@ -11,14 +18,20 @@
 #include <msp430.h>
 #include <stdint.h>
 
-
-// Button-Pins definieren
-#define BUTTON1_PORT P4IN
-#define BUTTON1_PIN BIT1 // P4.1
-#define BUTTON2_PORT P2IN
-#define BUTTON2_PIN BIT1 // P2.1
-
+/**
+ * @brief Initialisiert die Buttons.
+ *
+ * Konfiguriert die GPIO Pins für beide Buttons mit Pull-up und
+ * aktiviert die Interrupts.
+ */
 void button_init(void);
+
+/**
+ * @brief Startet den Debounce Timer.
+ *
+ * Startet einen 500ms Timer für das Debouncing der Buttons und
+ * deaktiviert die Button Interrupts während dieser Zeit.
+ */
 inline void button_debounce_start(void);
 
 #endif /* BUTTON_H_ */

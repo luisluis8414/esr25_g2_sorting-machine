@@ -1,0 +1,138 @@
+PROJECT_NAME           = "esr25_g2_sorting-machine"
+PROJECT_NUMBER         = 1.0
+PROJECT_BRIEF         = "Automatisierte Medikament Sortiermaschine"
+OUTPUT_DIRECTORY      = docs
+CREATE_SUBDIRS        = NO
+ALLOW_UNICODE_NAMES   = YES
+OUTPUT_LANGUAGE       = German
+BRIEF_MEMBER_DESC     = YES
+REPEAT_BRIEF         = YES
+ALWAYS_DETAILED_SEC  = NO
+INLINE_INHERITED_MEMB = NO
+FULL_PATH_NAMES      = YES
+SHORT_NAMES          = NO
+JAVADOC_AUTOBRIEF    = YES
+QT_AUTOBRIEF         = NO
+MULTILINE_CPP_IS_BRIEF = NO
+INHERIT_DOCS         = YES
+SEPARATE_MEMBER_PAGES = NO
+TAB_SIZE             = 4
+OPTIMIZE_OUTPUT_FOR_C = YES
+BUILTIN_STL_SUPPORT  = NO
+CPP_CLI_SUPPORT      = NO
+SIP_SUPPORT          = NO
+DISTRIBUTE_GROUP_DOC = NO
+GROUP_NESTED_COMPOUNDS = NO
+SUBGROUPING          = YES
+EXTRACT_ALL          = YES
+EXTRACT_PRIVATE      = YES
+EXTRACT_PACKAGE      = YES
+EXTRACT_STATIC       = YES
+EXTRACT_LOCAL_CLASSES = YES
+EXTRACT_LOCAL_METHODS = YES
+EXTRACT_ANON_NSPACES = NO
+HIDE_UNDOC_MEMBERS   = NO
+HIDE_UNDOC_CLASSES   = NO
+HIDE_FRIEND_COMPOUNDS = NO
+HIDE_IN_BODY_DOCS    = NO
+INTERNAL_DOCS        = NO
+CASE_SENSE_NAMES     = YES
+HIDE_SCOPE_NAMES     = NO
+HIDE_COMPOUND_REFERENCE = NO
+SHOW_INCLUDE_FILES   = YES
+SHOW_GROUPED_MEMB_INC = NO
+FORCE_LOCAL_INCLUDES = NO
+INLINE_INFO          = YES
+SORT_MEMBER_DOCS     = YES
+SORT_BRIEF_DOCS      = NO
+SORT_MEMBERS_CTORS_1ST = NO
+SORT_GROUP_NAMES     = NO
+SORT_BY_SCOPE_NAME   = NO
+STRICT_PROTO_MATCHING = NO
+GENERATE_TODOLIST    = YES
+GENERATE_TESTLIST    = YES
+GENERATE_BUGLIST     = YES
+GENERATE_DEPRECATEDLIST = YES
+MAX_INITIALIZER_LINES = 30
+SHOW_USED_FILES      = YES
+SHOW_FILES           = YES
+SHOW_NAMESPACES      = YES
+
+# Doxygen Awesome Theme Configuration
+GENERATE_HTML         = YES
+HTML_OUTPUT          = html
+HTML_FILE_EXTENSION  = .html
+HTML_HEADER          = 
+HTML_FOOTER          = 
+HTML_STYLESHEET      = 
+HTML_EXTRA_STYLESHEET = temp-awesome/doxygen-awesome.css \
+                       temp-awesome/doxygen-awesome-sidebar-only.css \
+                       temp-awesome/doxygen-awesome-sidebar-only-darkmode-toggle.css
+HTML_EXTRA_FILES     = temp-awesome/doxygen-awesome-darkmode-toggle.js \
+                      temp-awesome/doxygen-awesome-fragment-copy-button.js \
+                      temp-awesome/doxygen-awesome-paragraph-link.js \
+                      temp-awesome/doxygen-awesome-interactive-toc.js
+HTML_COLORSTYLE      = LIGHT
+HTML_COLORSTYLE_HUE  = 220
+HTML_COLORSTYLE_SAT  = 100
+HTML_COLORSTYLE_GAMMA = 80
+HTML_DYNAMIC_MENUS   = YES
+HTML_DYNAMIC_SECTIONS = YES
+HTML_INDEX_NUM_ENTRIES = 100
+GENERATE_DOCSET      = NO
+GENERATE_HTMLHELP    = NO
+GENERATE_CHI         = NO
+GENERATE_QHP         = NO
+GENERATE_ECLIPSEHELP = NO
+GENERATE_TREEVIEW    = YES
+ENUM_VALUES_PER_LINE = 4
+TREEVIEW_WIDTH       = 250
+EXT_LINKS_IN_WINDOW  = NO
+FORMULA_FONTSIZE     = 10
+USE_MATHJAX          = NO
+MATHJAX_FORMAT       = HTML-CSS
+MATHJAX_RELPATH      = https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/
+SEARCHENGINE         = YES
+SERVER_BASED_SEARCH  = NO
+EXTERNAL_SEARCH      = NO
+SEARCHENGINE_URL     = 
+SEARCHDATA_FILE      = searchdata.xml
+EXTERNAL_SEARCH_ID   = 
+EXTRA_SEARCH_MAPPINGS = 
+
+# LaTeX Configuration
+GENERATE_LATEX         = NO
+LATEX_OUTPUT          = latex
+USE_PDFLATEX          = YES
+LATEX_CMD_NAME        = 
+MAKEINDEX_CMD_NAME    = makeindex
+LATEX_MAKEINDEX_CMD   = makeindex
+COMPACT_LATEX         = NO
+PAPER_TYPE           = a4
+PDF_HYPERLINKS       = YES
+LATEX_BATCHMODE      = NO
+LATEX_HIDE_INDICES   = NO
+LATEX_BIB_STYLE      = plain
+
+# Input files
+INPUT                = .
+INPUT_ENCODING       = UTF-8
+FILE_PATTERNS        = *.c \
+                      *.h \
+                      *.md
+RECURSIVE            = YES
+EXCLUDE              = temp-awesome \
+                      Debug
+EXCLUDE_SYMLINKS     = NO
+EXCLUDE_PATTERNS     = */Debug/* \
+                      */temp-awesome/*
+EXCLUDE_SYMBOLS      = 
+EXAMPLE_PATH         = 
+EXAMPLE_PATTERNS     = *
+EXAMPLE_RECURSIVE    = NO
+IMAGE_PATH           = docs/assets
+INPUT_FILTER         = 
+FILTER_PATTERNS      = 
+FILTER_SOURCE_FILES  = NO
+FILTER_SOURCE_PATTERNS = 
+USE_MDFILE_AS_MAINPAGE = README.md 

@@ -14,10 +14,10 @@
  *   - I2C_read_reg()     – Ein einzelnes Byte-Register lesen
  *
  * Die Kommunikation wird im Hintergrund von der EUSCI_B0 Interrupt-Service-
- * Routine behandelt. Die Funktionen versetzen die CPU 
+ * Routine behandelt. Die Funktionen versetzen die CPU
  * in LPM0 bis die entsprechende STOP-Bedingung generiert wurde.
  *
- * @note Detzt voraus, dass SMCLK mit 1 MHz läuft. Vor Verwendung 
+ * @note Detzt voraus, dass SMCLK mit 1 MHz läuft. Vor Verwendung
  *       anderer Funktionen muss die init() Methode aufgerufen werden.
  */
 
@@ -57,8 +57,8 @@ void I2C_init(void);
  * @param[in] data        Pointer auf den Sendepuffer.
  * @param[in] length      Anzahl der zu sendenden Bytes (≥ 1).
  *
- * @note Die Funktion blockiert die CPU durch Eintritt in LPM0. Die Kontrolle
- *       wird zurückgegeben, sobald die STOP-Bedingung gesendet wurde.
+ * @note Die Funktion blockiert die CPU durch Eintritt in den LPM3. Die Kontrolle
+ *       wird zurückgegeben, sobald die STOP-Bedingung oder NACK gesendet wurde.
  */
 void I2C_write(uint8_t slave_addr, char data[], uint8_t length);
 
@@ -74,7 +74,7 @@ void I2C_write(uint8_t slave_addr, char data[], uint8_t length);
  *
  * @return Der im angeforderten Register gespeicherte Wert.
  *
- * @warning Die Routine ist blockierend und wird LPM0 betreten bis das Byte
+ * @warning Die Routine ist blockierend und wird LPM3 betreten bis das Byte
  *          empfangen wurde.
  */
 char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr);
