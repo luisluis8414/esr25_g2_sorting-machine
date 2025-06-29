@@ -26,6 +26,12 @@
 #define PLATFORM_H_
 
 /**
+ * @brief Servo Kanal Definitionen
+ */
+#define RICHTUNGSSERVO 0 /**< PCA9685 Kanal für Richtungssteuerung */
+#define KIPPSERVO 4      /**< PCA9685 Kanal für Kippbewegung */
+
+/**
  * @brief Setzt die Plattform in ihre Standardposition.
  */
 void plattform_default_position(void);
