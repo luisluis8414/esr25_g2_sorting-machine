@@ -84,7 +84,7 @@ void do_sort(void)
 {
     uint8_t r, g, b;
     led_ready_off();
-    led_sorting_on(); 
+    led_sorting_on();
     TCS_get_rgb(&r, &g, &b);
 
     if (r > g && r > b)
@@ -175,7 +175,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         case EVT_S2:
             turnDisplayOn();
             lcd1602_write(1, "Sortiermodus:");
-            lcd1602_write(2, "S1: auto, S2: man");
+            lcd1602_write(2, "S1: auto,S2: man");
             *currentState = MODE_SELECTION_STATE;
             break;
         case EVT_SYSTEM_TICK:

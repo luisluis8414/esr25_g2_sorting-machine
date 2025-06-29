@@ -61,6 +61,15 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+echo Creating image directory in HTML output...
+mkdir docs\html\images 2>nul
+
+echo Copying images to HTML output...
+copy docs\images\*.* docs\html\images\ >nul 2>&1
+
+echo Updating image paths in generated HTML...
+powershell -Command "(Get-Content docs\html\index.html) -replace 'docs/images/', 'images/' | Set-Content docs\html\index.html"
+
 echo Documentation generated successfully!
 echo HTML documentation is available in docs\html\index.html
 

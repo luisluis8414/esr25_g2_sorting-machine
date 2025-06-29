@@ -74,7 +74,7 @@ void I2C_write(uint8_t slave_addr, char data[], uint8_t length);
  *
  * @return Der im angeforderten Register gespeicherte Wert.
  *
- * @warning Die Routine ist blockierend und wird LPM0 betreten bis das Byte
+ * @warning Die Routine ist blockierend und wird LPM3 betreten bis das Byte
  *          empfangen wurde.
  */
 char I2C_read_reg(uint8_t slave_addr, uint8_t reg_addr);
