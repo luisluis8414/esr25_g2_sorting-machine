@@ -18,7 +18,7 @@ void plattform_default_position(void)
     PCA9685_set_servo_position(RICHTUNGSSERVO, SERVO_DEG_PULSE_90); 
     PCA9685_set_servo_position(KIPPSERVO, SERVO_DEG_PULSE_90);     
 
-    timer_sleep_ms(700);
+    timer_sleep_ms(500);
 }
 
 void plattform_sleep_position(void)
@@ -37,7 +37,6 @@ void plattform_empty(void)
 
     // Zurück zur Standardposition
     plattform_default_position();
-    timer_sleep_ms(500);
 }
 
 void plattform_empty_r(void)

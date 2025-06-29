@@ -19,6 +19,7 @@
 #include "platform/platform.h"
 #include "lcd1602_display/lcd1602_manager.h"
 #include "timer/timer.h"
+#include "led/led.h"
 #include <msp430.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -82,6 +83,8 @@ void check_for_objects()
 void do_sort(void)
 {
     uint8_t r, g, b;
+    led_ready_off();
+    led_sorting_on(); 
     TCS_get_rgb(&r, &g, &b);
 
     if (r > g && r > b)
@@ -103,6 +106,10 @@ void do_sort(void)
         blue_sorted++;
     }
     total_sorted++;
+    led_sorting_off();
+    led_ready_on();
+
+    timer_sleep_ms(500);
     writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
 }
 
@@ -167,8 +174,8 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             break;
         case EVT_S2:
             turnDisplayOn();
-            lcd1602_write(0, "Sort-modus");
-            lcd1602_write(1, "S1: auto, S2: man");
+            lcd1602_write(1, "Sortiermodus:");
+            lcd1602_write(2, "S1: auto, S2: man");
             *currentState = MODE_SELECTION_STATE;
             break;
         case EVT_SYSTEM_TICK:
@@ -208,17 +215,19 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         case EVT_S1:
             lcd1602_clear();
             plattform_default_position();
-            lcd1602_write(1, "Auto-Sort aktiv");
             timer_systick_start();
             calibrate_clear();
+            led_ready_on();
+            lcd1602_write(1, "Auto-Sort aktiv");
             *currentState = AUTO_SORT_STATE;
             break;
 
         case EVT_S2:
             lcd1602_clear();
             plattform_default_position();
-            lcd1602_write(1, "Manueller Modus");
             calibrate_clear();
+            led_ready_on();
+            lcd1602_write(1, "Manueller Modus");
             *currentState = MANUAL_SORT_STATE;
             break;
 
@@ -234,6 +243,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         case EVT_S1:
             break;
         case EVT_S2:
+            led_ready_off();
             timer_systick_stop();
             plattform_sleep_position();
             turnDisplayOff();
@@ -255,6 +265,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             check_for_objects();
             break;
         case EVT_S2:
+            led_ready_off();
             plattform_sleep_position();
             turnDisplayOff();
             *currentState = OFF_STATE;
@@ -268,4 +279,25 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
         }
         break;
     }
+}
+
+#pragma vector = TIMER0_B1_VECTOR
+__interrupt void TIMER0_B1_ISR(void)
+{
+    switch (__even_in_range(TB0IV, TB0IV_TBIFG))
+    {
+    case TB0IV_NONE:
+        break;
+    case TB0IV_TBCCR1:
+        break;
+    case TB0IV_TBCCR2:
+        break;
+    case TB0IV_TBIFG:
+        eventBits |= EVT_SYSTEM_TICK;
+        guiSysTickCnt++;
+        break;
+    default:
+        break;
+    }
+    __bic_SR_register_on_exit(LPM3_bits);
 }
