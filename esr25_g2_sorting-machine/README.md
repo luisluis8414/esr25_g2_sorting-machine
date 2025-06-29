@@ -4,7 +4,7 @@ Dieses Projekt implementiert eine automatisierte Sortiermaschine unter Verwendun
 
 ## Systemarchitektur
 
-![Systemarchitektur](docs/assets/UML_Einsatzdiagramm.png)
+![Systemarchitektur](docs/images/UML_Einsatzdiagramm.png)
 
 Das System besteht aus folgenden Hauptkomponenten:
 - **MSP430FR2355 Launchpad**: Mikrocontroller
@@ -15,7 +15,7 @@ Das System besteht aus folgenden Hauptkomponenten:
 
 ## Hardware-Implementierung
 
-![Verdrahtungsplan](docs/assets/wire_diagram_3_Steckplatine.png)
+![Verdrahtungsplan](docs/images/wire_diagram.png)
 
 ### Hauptkomponenten und Verbindungen
 - **I2C-Bus-Kommunikation**: 
@@ -27,7 +27,7 @@ Das System besteht aus folgenden Hauptkomponenten:
 
 ## Mikrocontroller-Peripherie
 
-![Verwendete Peripherie](docs/assets/used_peripherals.png)
+![Verwendete Peripherie](docs/images/used_peripherals.png)
 
 Der MSP430FR2355 nutzt folgende wichtige Peripheriekomponenten:
 - **I2C-Schnittstelle**: Für die Kommunikation mit externen Geräten
