@@ -1,0 +1,20 @@
+*.c linguist-language=C
+*.h linguist-language=C
+
+esr25_g2_sorting-machine/Debug/* linguist-generated
+esr25_g2_sorting-machine/Release/* linguist-generated
+*.launch linguist-generated
+*.ccxml linguist-generated
+*.mk linguist-generated
+*.opt linguist-generated
+
+docs/* linguist-documentation
+*.md linguist-documentation
+
+*.pdf -text
+*.jpg -text
+*.png -text
+*.gif -text
+*.mp4 -text
+
+targetConfigs/* linguist-vendored
