@@ -23,10 +23,10 @@ Desktop.ini
 .clangd
 .theia/
 
-# Doxygen generated documentation
 docs/html/
 docs/latex/
 docs/xml/
 
-# Doxygen theme
 temp-awesome/
+
+workspace_settings.theia-workspace
