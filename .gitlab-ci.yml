@@ -1,0 +1,20 @@
+image: debian:bookworm
+
+before_script:
+  - apt-get update && apt-get install -y doxygen git curl unzip
+  - git clone --depth 1 https://github.com/jothepro/doxygen-awesome-css.git temp-awesome
+
+pages:
+  stage: deploy
+  script:
+    - rm -rf docs/html docs/latex docs/xml || true
+    - doxygen Doxyfile
+    - mkdir -p public/images
+    - cp -r docs/html/* public/
+    - cp docs/images/* public/images/ || true
+    - sed -i 's|docs/images/|images/|g' public/index.html || true
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
