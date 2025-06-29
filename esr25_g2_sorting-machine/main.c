@@ -117,8 +117,8 @@ int main(void)
     State_t currentState = OFF_STATE;
     Event_t event = EVT_NO_EVENT;
 
-    WDTCTL = WDTPW | WDTHOLD; 
-    PM5CTL0 &= ~LOCKLPM5;     
+    WDTCTL = WDTPW | WDTHOLD;
+    PM5CTL0 &= ~LOCKLPM5;
 
     init();
 
@@ -133,6 +133,6 @@ int main(void)
                 event = getEvent(&eventBits);
             }
         }
-        LPM3; 
+        LPM3;
     }
 }
