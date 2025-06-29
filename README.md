@@ -1,11 +1,13 @@
-# Sortiermaschinen-Projekt
+# esr25_g2_sorting-machine - Medikamenten Sortiermaschine
 
 Dieses Projekt implementiert eine automatisierte Sortiermaschine unter Verwendung des MSP430FR2355. Das System wurde entwickelt, um Objekte (Medikamente) basierend auf ihrer Farbe mithilfe eines Farbsensors und einer servogesteuertern Kippplatform zu sortieren.
 
 # Demo
 
-Hier sind einige Bilder des fertigen Systems:
+## Sortiervorgang in Aktion
+![Sortiervorgang Demo](docs/images/demo_sort.gif)
 
+## Ein paar Bilder
 | <img src="docs/images/demo_system.jpg" width="250" alt="Gesamtsystem"/> | <img src="docs/images/demo_display.jpg" width="250" alt="LCD Display"/> | <img src="docs/images/demo_sort.jpg" width="250" alt="Sortiersystem"/> |
 |:---:|:---:|:---:|
 | *Komplettes System* | *LCD-Display - Hier Auswahl des Sortiermodus* | *Sortierplattform sortiert rote Pille* |
@@ -65,9 +67,9 @@ esr25_g2_sorting-machine/
 
 Das Projekt verwendet Doxygen zur Dokumentationsgenerierung. Um die Dokumentation zu erstellen:
 
-1. Stellen Sie sicher, dass [Doxygen](https://www.doxygen.nl/download.html) installiert ist
-2. Führen Sie das Script `generate_docs.bat` aus
-3. Die generierte Dokumentation finden Sie unter `docs/html/index.html`
+1. Stelle sicher, dass [Doxygen](https://www.doxygen.nl/download.html) installiert ist
+2. Führe das Script `generate_docs.bat` aus
+3. Die generierte Dokumentation ist unter `docs/html/index.html` auffindbar
 
 Das Script wird automatisch:
 - Die Doxygen Awesome CSS Theme herunterladen (falls nicht vorhanden)
