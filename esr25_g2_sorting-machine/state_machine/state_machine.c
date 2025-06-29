@@ -1,3 +1,18 @@
+/* ========================================================================== */
+/* state_machine.c                                                               */
+/* ========================================================================== */
+/**
+ * @file      state_machine.c
+ * @author    raachl, wehrberger
+ * @date      24.06.2025
+ *
+ * @brief     Implementierung der State Machine für die Sortieranlage.
+ *
+ * Dieses Modul implementiert die State Machine Logic zur Steuerung der Sortieranlage.
+ * Es verarbeitet State Transitions und Events, steuert die Farberkennung und
+ * Sortier Prozess und verwaltet die Sortier Statistiken.
+ */
+
 #include "state_machine.h"
 #include "TCS34725/TCS34725.h"
 #include "lcd1602_display/lcd1602.h"
@@ -8,22 +23,44 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** @brief Referenz Wert für Clear Reading während der Kalibrierung */
 volatile uint16_t clear_ref = 0;
+
+/** @brief Minimum Delta für Clear Wert zur Objekt Erkennung */
 volatile uint16_t MIN_DELTA_CLR = 0;
 
-    uint8_t total_sorted = 0;
-    uint8_t red_sorted = 0;
-    uint8_t green_sorted = 0;
-    uint8_t blue_sorted = 0;
+/** @brief Anzahl aller sortierten Objekte */
+uint8_t total_sorted = 0;
 
+/** @brief Anzahl der sortierten roten Objekte */
+uint8_t red_sorted = 0;
+
+/** @brief Anzahl der sortierten grünen Objekte */
+uint8_t green_sorted = 0;
+
+/** @brief Anzahl der sortierten blauen Objekte */
+uint8_t blue_sorted = 0;
+
+/**
+ * @brief Kalibriert den Referenz Wert für das Clear Reading.
+ *
+ * Liest den derzeitigen Clear Wert und setzt ihn als Referenz.
+ * Berechnet auch den Minimum Delta Schwellwert als 40% des Referenz Wertes.
+ */
 void calibrate_clear(void)
 {
     uint16_t c;
     TCS_read_clear(&c);
     clear_ref = c;
-    MIN_DELTA_CLR = (c * 2) / 10;  
+    MIN_DELTA_CLR = (c * 4) / 10;
 }
 
+/**
+ * @brief Prüft auf Objekte mittels dem Farbsensor.
+ *
+ * Vergleicht den aktuellen Clear Wert mit dem Referenz Wert.
+ * Setzt EVT_OBJECT_DETECTED wenn ein Objekt erkannt wurde.
+ */
 void check_for_objects()
 {
     uint16_t clear;
@@ -35,6 +72,13 @@ void check_for_objects()
     }
 }
 
+/**
+ * @brief Führt den Sortier Prozess basierend auf der erkannten Farbe durch.
+ *
+ * Liest RGB Werte, bestimmt die dominante Farbe und aktiviert den
+ * entsprechenden Sortier Mechanismus. Aktualisiert die Sortier Statistiken
+ * und die Anzeige.
+ */
 void do_sort(void)
 {
     uint8_t r, g, b;
@@ -62,18 +106,31 @@ void do_sort(void)
     writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
 }
 
-Event_t getEvent (Event_t *event) {
-    // if more than 7 different events are required, all 16 bits can be used
-    // within the event variable; with 8 bits only, the function consumes less time
+/**
+ * @brief Extrahiert das Event mit der höchsten Priorität aus den Event Bits.
+ *
+ * Verarbeitet die Event Bits von MSB zu LSB (bis zu 8 Bits),
+ * gibt das höchste gesetzte Bit zurück und löscht es.
+ *
+ * @param[in,out] event Pointer zu den Event Bits
+ * @return Das Event mit der höchsten Priorität oder EVT_NO_EVENT wenn keine Events vorhanden sind
+ */
+Event_t getEvent(Event_t *event)
+{
     uint16_t ii = 8;
     Event_t bitMask = 0x0080;
 
-    if (*event != 0) {
-        while (ii>0) {
-            if ((bitMask & *event) > 0) {
+    if (*event != 0)
+    {
+        while (ii > 0)
+        {
+            if ((bitMask & *event) > 0)
+            {
                 *event &= ~bitMask;
-                return(bitMask);
-            } else {
+                return (bitMask);
+            }
+            else
+            {
                 bitMask >>= 1;
             }
             ii--;
@@ -82,6 +139,20 @@ Event_t getEvent (Event_t *event) {
     return 0;
 }
 
+/**
+ * @brief Haupt Event Handler der State Machine.
+ *
+ * Verarbeitet Events basierend auf dem aktuellen State und führt entsprechende
+ * Aktionen aus. Implementiert folgende State Übergänge:
+ *   - OFF_STATE: Startpunkt, Übergang zu DISPLAY_STATE oder MODE_SELECTION_STATE möglich
+ *   - DISPLAY_STATE: Zeigt Sortier Statistiken, kann Zähler zurücksetzen oder zu OFF_STATE wechseln
+ *   - MODE_SELECTION_STATE: Auswahl zwischen AUTO_SORT_STATE und MANUAL_SORT_STATE
+ *   - AUTO_SORT_STATE: Automatisches Sortieren mit periodischer Objekt Erkennung
+ *   - MANUAL_SORT_STATE: Manuelles Sortieren durch Knopfdruck ausgelöst
+ *
+ * @param[in,out] currentState Pointer zum aktuellen State
+ * @param[in] event Zu verarbeitendes Event
+ */
 void handleEvent_FSM(State_t *currentState, Event_t event)
 {
     switch (*currentState)
@@ -107,7 +178,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             break;
         }
         break;
-    
+
     case DISPLAY_STATE:
         switch (event)
         {
@@ -120,7 +191,7 @@ void handleEvent_FSM(State_t *currentState, Event_t event)
             red_sorted = 0;
             green_sorted = 0;
             blue_sorted = 0;
-            
+
             writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
             break;
         case EVT_SYSTEM_TICK:
