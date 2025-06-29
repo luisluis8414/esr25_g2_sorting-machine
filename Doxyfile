@@ -115,7 +115,7 @@ LATEX_HIDE_INDICES   = NO
 LATEX_BIB_STYLE      = plain
 
 # Input files
-INPUT                = .
+INPUT                = esr25_g2_sorting-machine README.md
 INPUT_ENCODING       = UTF-8
 FILE_PATTERNS        = *.c \
                       *.h \
@@ -130,7 +130,7 @@ EXCLUDE_SYMBOLS      =
 EXAMPLE_PATH         = 
 EXAMPLE_PATTERNS     = *
 EXAMPLE_RECURSIVE    = NO
-IMAGE_PATH           = docs/assets
+IMAGE_PATH           = docs/images
 INPUT_FILTER         = 
 FILTER_PATTERNS      = 
 FILTER_SOURCE_FILES  = NO
