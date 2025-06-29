@@ -27,12 +27,13 @@
 
 /**
  * @brief Setzt die Plattform in ihre Standardposition.
- *
- * Bewegt beide Servos (Richtung und Kippen) in ihre 90°-Standardposition.
- * Dies ist die neutrale Position, in der die Plattform bereit ist,
- * neue Objekte zu empfangen.
  */
 void plattform_default_position(void);
+
+/**
+ * @brief Setzt die Plattform in ihre Schlafposition.
+ */
+void plattform_sleep_position(void);
 
 /**
  * @brief Führt die Kippbewegung zum Entleeren der Plattform aus.
@@ -50,25 +51,16 @@ void plattform_empty(void);
 
 /**
  * @brief Entleert die Plattform in Richtung Rot.
- *
- * Stellt den Richtungsservo auf 45° (Rot-Position) und führt
- * anschließend die Entleerungssequenz aus.
  */
 void plattform_empty_r(void);
 
 /**
  * @brief Entleert die Plattform in Richtung Grün.
- *
- * Stellt den Richtungsservo auf 90° (Grün-Position) und führt
- * anschließend die Entleerungssequenz aus.
  */
 void plattform_empty_g(void);
 
 /**
  * @brief Entleert die Plattform in Richtung Blau.
- *
- * Stellt den Richtungsservo auf 135° (Blau-Position) und führt
- * anschließend die Entleerungssequenz aus.
  */
 void plattform_empty_b(void);
 

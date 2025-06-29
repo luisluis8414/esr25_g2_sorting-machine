@@ -1,126 +1,66 @@
-/*
- * timer.c
- *
- *  Created on: 22.06.2025
- *      Author: raachl
- */
- /* --COPYRIGHT--,BSD
- * Copyright (c) 2017, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * --/COPYRIGHT--*/
-//*****************************************************************************
-// This example shows how to configure the I2C module as a master for
-// single byte transmission in interrupt mode. The address of the slave
-// module that the master is communicating with also set in this example.
-//
-//  TI sample project msp430fr235x_tb0_04.c
-//  Modified by S. Steddin
-//  2024-06-09
-//******************************************************************************
-/*
- * Allgemeine Zweckbestimmung:
- * Demonstration, wie eine einfache ereignisgesteuerte finite state machine implementiert
- * werden kann. Durch Drcken von S1 wird der ON-state aktiviert: Die grne LED wird aktiviert
- * und ein TimerB0 generiert in regelmigen Abstnden einen Interrupt (system tick). Durch Drcken
- * von S2 wird in den OFF-state gewechselt und die system tick wird unterbrochen.
- * Hat die event loop alle per ISR signalisierten Events abgearbeitet, so (Taste S1 oder S2 oder system tick)
- * so wird eine idle Funktion aufgerufen, bevor sich das System in den LPM3 begibt und erst wieder beim
- * Eintreffen eines weiteren Interrupts aufwacht.
- *
- * Die Vorlage kann mit einer beliebigen Anzahl von states erweitert werden, die jeweils auf bis zu 15
- * unterschiedliche events reagieren knnen.
- *
- * Die durch die Interrupts ausgelsten Aktionen werden in der main-loop abgearbeitet, so dass das System
- * jederzeit weitere Interrupts entgegennehmen kann. Alle Aktionen werden im Modus "run-to-completion"
- * abgearbeitet (kooperatives Multitasking)
- *
- * Das system tick Modul kann in beliebiege andere Anwendungen bernommen werden.
- *
- * Version 0.1
- * System funktioniert, jedoch ist der Code noch nicht ausreichend formatiert und kommentiert.
- *
- * Bestimmungsgemer Gebrauch
- * 1. bersetzen des Projektes und bertragen auf das Launchpad
- * 2. Starten des Blinkmode (ON-state) durch Drcken von S1: grne LED leuchtet, rote LED blinkt
- * 3. Stoppen des Blinkmode (Wechsel in OFF-state) durch Drcken von S2: keine LED leuchtet
- *
- * Funktionale Anforderungen
- * FA-001: rote LED soll timergesteuert blinken
- * FA-002: Durch S1 soll der Blinkmode gestartet werden
- * FA-003: Durch S2 soll der Blinkmode gestoppt werden
- * FA-004: Im OFF-state soll der system tick deaktiviert sein.
- *
- * Nichtfunktionale Anforderungen
- * NFA-001: Timer fr system tick soll ber Uhrenquarz getaktet werden, um den LPM3 nutzen zu knnen.
- * NFA-002: system tick soll ber ein API steuerbar sein
- * NFA-003: system tick API soll im Modul system_tick.c angelegt werden
- * NFA-004: system tick soll ber TimerB0 im up-Mode implementiert werden
- *
- * Hinweise: S1 und S2 knnen prellen. In diesem Programm muss keine Entprellung stattfinden,
- * da der Wechsel in einen anderen state, in dem jeweils nur 1 Taste eine Aktion auslst, gegen
- * Tastenprellen unempfindlich ist. Anderfalls msste die sleep Funktion verwendet werden, um
- * nach der Auslsung eines Tasteninterrupts eine Wartezeit zu erzwingen.
- *
- * Verdrahtung:
- *                MSP430FR2355
- *              -----------------
- *          S1-|P2.3             |
- *          S2-|P4.1             |
- *             |                 |
- *             |                 |
- *   LEDred<---|P1.0             |
- *   LEDgreen<-|P6.6             |
- *
- *   S1 und S2 werden ber interne pull up Widerstände aktiviert.
- *
- *   TODO:
- *   - doxygen Kommentare ergnzen und Doku erzeugen
- *   - Bilder und UML-Diagramme erzeugen
- *   - gleiches Projekt mittels DriverLib erstellen
- *
- */
-//  ACLK = TBCLK = 32768Hz, MCLK = SMCLK = default DCODIV ~1MHz
-
-
-#include <msp430.h> 
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "state_machine/state_machine.h"
+#include "state_machine.h"
+#include "TCS34725/TCS34725.h"
 #include "lcd1602_display/lcd1602.h"
+#include "platform/platform.h"
 #include "lcd1602_display/lcd1602_manager.h"
+#include "timer/timer.h"
+#include <msp430.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-extern void writeCurrentCount(uint8_t current_count_all, uint8_t current_count_blue, uint8_t current_count_green, uint8_t current_count_red);
-extern void writeReady(void); 
-extern void writeDetectedColor(COLOR color);
-Event_t eventBits = EVT_NO_EVENT;
+volatile uint16_t clear_ref = 0;
+volatile uint16_t MIN_DELTA_CLR = 0;
+
+    uint8_t total_sorted = 0;
+    uint8_t red_sorted = 0;
+    uint8_t green_sorted = 0;
+    uint8_t blue_sorted = 0;
+
+void calibrate_clear(void)
+{
+    uint16_t c;
+    TCS_read_clear(&c);
+    clear_ref = c;
+    MIN_DELTA_CLR = (c * 2) / 10;  
+}
+
+void check_for_objects()
+{
+    uint16_t clear;
+    TCS_read_clear(&clear);
+
+    if (clear + MIN_DELTA_CLR < clear_ref)
+    {
+        eventBits |= EVT_OBJECT_DETECTED;
+    }
+}
+
+void do_sort(void)
+{
+    uint8_t r, g, b;
+    TCS_get_rgb(&r, &g, &b);
+
+    if (r > g && r > b)
+    {
+        plattform_empty_r();
+        writeDetectedColor(RED);
+        red_sorted++;
+    }
+    else if (g > b)
+    {
+        plattform_empty_g();
+        writeDetectedColor(GREEN);
+        green_sorted++;
+    }
+    else
+    {
+        plattform_empty_b();
+        writeDetectedColor(BLUE);
+        blue_sorted++;
+    }
+    total_sorted++;
+    writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
+}
 
 Event_t getEvent (Event_t *event) {
     // if more than 7 different events are required, all 16 bits can be used
@@ -142,72 +82,119 @@ Event_t getEvent (Event_t *event) {
     return 0;
 }
 
-
-void handleEvent_FSM(State_t *currentState, Event_t event) {
-
-    State_t state = *currentState;
-
-    switch (state) {
-        case OFF_STATE:
-            switch (event) {
-                case EVT_NO_EVENT:
-                    break;
-                case EVT_S1:
-                    writeReady();
-                    // Other configurations?
-                    *currentState = ON_STATE;
-                    break;
-                case EVT_S2:
-                    writeCurrentCount(10, 4, 3, 3);
-                    *currentState = DISPLAY_STATE;
-                    break;
-                // case EVENT_COLOR_DETECTION -> do nothing
-                // case TIMER_UP -> nothing         
-                default:
-                    break;
-            }
+void handleEvent_FSM(State_t *currentState, Event_t event)
+{
+    switch (*currentState)
+    {
+    case OFF_STATE:
+        switch (event)
+        {
+        case EVT_S1:
+            turnDisplayOn();
+            writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
+            *currentState = DISPLAY_STATE;
             break;
-        case DISPLAY_STATE:
-            switch (event) {
-                case EVT_NO_EVENT:
-                    break;
-                case EVT_S1:
-                    writeReady();
-                    // DisplayShowSortReady
-                    // Other configurations
-                    *currentState = ON_STATE;
-                    break;
-                case EVT_S2:
-                    // Reset Timer
-                    break;
-                // case EVENT_COLOR_DETECTION -> do nothing or do something??
-                // case TIMER_UP -> clear display, go offline display, *currentState = OFF_STATE;   
-                default:
-                    break;
-            }
+        case EVT_S2:
+            turnDisplayOn();
+            lcd1602_write(0, "Sort-modus");
+            lcd1602_write(1, "S1: auto, S2: man");
+            *currentState = MODE_SELECTION_STATE;
             break;
-        case ON_STATE:
-            switch (event) {
-                case EVT_NO_EVENT:
-                    break;
-                case EVT_S1:
-                    // Timer reset
-                    // Other stuff?
-                    break;
-                case EVT_S2:
-                    writeCurrentCount(10, 4, 3, 3);
-                    *currentState = DISPLAY_STATE;                
-                    break;
-                // case EVENT_COLOR_DETECTION -> all the doing writeDetectedColor(RED);
-                // case TIMER_UP -> clear display, go offline display *currentState = OFF_STATE;     
-                default:
-                    break;
-            }
+        case EVT_SYSTEM_TICK:
+            timer_systick_stop();
             break;
+        case EVT_OBJECT_DETECTED:
+            break;
+        }
+        break;
+    
+    case DISPLAY_STATE:
+        switch (event)
+        {
+        case EVT_S1:
+            turnDisplayOff();
+            *currentState = OFF_STATE;
+            break;
+        case EVT_S2:
+            total_sorted = 0;
+            red_sorted = 0;
+            green_sorted = 0;
+            blue_sorted = 0;
+            
+            writeCurrentCount(total_sorted, blue_sorted, green_sorted, red_sorted);
+            break;
+        case EVT_SYSTEM_TICK:
+            timer_systick_stop();
+            break;
+        case EVT_OBJECT_DETECTED:
+            break;
+        }
+        break;
+
+    case MODE_SELECTION_STATE:
+        switch (event)
+        {
+        case EVT_S1:
+            lcd1602_clear();
+            plattform_default_position();
+            lcd1602_write(1, "Auto-Sort aktiv");
+            timer_systick_start();
+            calibrate_clear();
+            *currentState = AUTO_SORT_STATE;
+            break;
+
+        case EVT_S2:
+            lcd1602_clear();
+            plattform_default_position();
+            lcd1602_write(1, "Manueller Modus");
+            calibrate_clear();
+            *currentState = MANUAL_SORT_STATE;
+            break;
+
+        case EVT_SYSTEM_TICK:
+        case EVT_OBJECT_DETECTED:
+            break;
+        }
+        break;
+
+    case AUTO_SORT_STATE:
+        switch (event)
+        {
+        case EVT_S1:
+            break;
+        case EVT_S2:
+            timer_systick_stop();
+            plattform_sleep_position();
+            turnDisplayOff();
+            *currentState = OFF_STATE;
+            break;
+        case EVT_SYSTEM_TICK:
+            check_for_objects();
+            break;
+        case EVT_OBJECT_DETECTED:
+            do_sort();
+            break;
+        }
+        break;
+
+    case MANUAL_SORT_STATE:
+        switch (event)
+        {
+        case EVT_S1:
+            check_for_objects();
+            break;
+        case EVT_S2:
+            plattform_sleep_position();
+            turnDisplayOff();
+            *currentState = OFF_STATE;
+            break;
+        case EVT_SYSTEM_TICK:
+            timer_systick_stop();
+            break;
+        case EVT_OBJECT_DETECTED:
+            do_sort();
+            break;
+        }
+        break;
     }
-}
-
-
-void idleTask() {
-    return;
 }

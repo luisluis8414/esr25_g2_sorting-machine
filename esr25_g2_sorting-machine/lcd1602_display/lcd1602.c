@@ -195,3 +195,13 @@ void write4BitI2CtoDisplay(uint8_t data, bool cmd) {
     local_data = ((data<<4)& 0xF0)|mask;
     write8BitI2CtoDisplay(local_data);
 }
+
+lcd1602_res_t lcd1602_display(bool on) {
+    if (on) {
+        write4BitI2CtoDisplay(0x0C, true); // Display ON, Cursor OFF, Blink OFF
+    } else {
+        write4BitI2CtoDisplay(0x08, true); // Display OFF
+    }
+    timer_sleep_ms(1);
+    return eLCD1602_ok;
+}

@@ -109,7 +109,13 @@ void writeDetectedColor(COLOR color) {
     return;
 }
 
-void clearDisplayAndBacklightOff(void) {
+void turnDisplayOn(void) {
+    lcd1602_display(true);
+    lcd1602_backlight(true);
+}
+
+void turnDisplayOff(void) {
     lcd1602_clear();
+    lcd1602_display(false);
     lcd1602_backlight(false);
 }

@@ -139,7 +139,7 @@ uint16_t TCS_read_16bit_reg(uint8_t reg);
 void TCS_read_clear(uint16_t *clear);
 
 /**
- * @brief Liest RGBC-Werte und konvertiert zu 8-Bit RGB für Farberkennung.
+ * @brief Liest RGB-Werte und konvertiert zu 8-Bit RGB für Farberkennung.
  *
  * Aktiviert den Sensor mit LED, führt eine Messung durch und konvertiert
  * die rohen 16-Bit Werte zu 8-Bit RGB-Werten. Die Konvertierung ist für
@@ -153,12 +153,11 @@ void TCS_read_clear(uint16_t *clear);
  * @param[out] r8  Pointer zum Speichern des 8-Bit Rot-Werts.
  * @param[out] g8  Pointer zum Speichern des 8-Bit Grün-Werts.
  * @param[out] b8  Pointer zum Speichern des 8-Bit Blau-Werts.
- * @param[out] c16 Pointer zum Speichern des 16-Bit Clear-Kanal-Werts.
  *
  * @warning Dies ist nicht geeignet für akkurate Farbbestimmung oder
  *          Farbtemperaturmessungen.
  */
-void TCS_get_rgbc(uint8_t *r8, uint8_t *g8, uint8_t *b8, uint16_t *c16);
+void TCS_get_rgb(uint8_t *r8, uint8_t *g8, uint8_t *b8);
 
 /**
  * @brief Schaltet die TCS34725 LED ein.
